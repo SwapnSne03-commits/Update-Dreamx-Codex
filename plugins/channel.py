@@ -464,15 +464,7 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
         db.movie_updates = db.db.movie_updates
 
     movie_doc = await db.movie_updates.find_one({"_id": base_name})
-    # 🔥 TMDB search এর জন্য আলাদা title (with year)
-    search_title = base_name
 
-    if media_info.get("tag") == "#SERIES" and media_info.get("year"):
-        search_title = f"{base_name} {media_info['year']}"
-
-    # 🔥 remove season remnants just in case
-    search_title = re.sub(r'\bS\d{1,2}\b', '', search_title, flags=re.I)
-    search_title = re.sub(r'\s+', ' ', search_title).strip()
     error_tmdb=False
     file_data = {
         "filename": filename,
@@ -490,17 +482,17 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
 
     if not movie_doc:
         if TMDB_POSTER:
-            details = await get_movie_detailsx(search_title,is_series=(media_info["tag"] == "#SERIES"))
+            details = await get_movie_detailsx(base_name,is_series=(media_info["tag"] == "#SERIES"))
             if not details or details.get("error") or (not details.get("poster_url") and not details.get("backdrop_url")):
                 error_tmdb=True
                 logger.info("TMDB error switching to IMDB")
-                imdb_query = search_title
+                imdb_query = base_name
                 if media_info.get("year"):
                     imdb_query = f"{base_name} {media_info['year']}"
 
                 details = await get_movie_details(imdb_query) or {}
         else:
-            imdb_query = search_title
+            imdb_query = base_name
             if media_info.get("year"):
                 imdb_query = f"{base_name} {media_info['year']}"
 
