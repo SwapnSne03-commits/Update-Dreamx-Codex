@@ -451,6 +451,9 @@ async def process_and_send_update(bot, filename, caption):
         base_name = media_info["base_name"]
         processed = media_info["processed"]
 
+        merge_key = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
+        merge_key = re.sub(r'\s+', ' ', merge_key)
+
         lock = locks[base_name]
         async with lock:
             await _process_with_lock(bot, filename, caption, media_info, base_name, processed)
@@ -463,9 +466,10 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
     if not hasattr(db, 'movie_updates'):
         db.movie_updates = db.db.movie_updates
 
-    movie_doc = await db.movie_updates.find_one({"_id": merge_key})
     merge_key = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
     merge_key = re.sub(r'\s+', ' ', merge_key)
+
+    movie_doc = await db.movie_updates.find_one({"_id": merge_key})
 
     error_tmdb=False
     file_data = {
@@ -531,7 +535,7 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
         }
         try:
             await db.movie_updates.insert_one(movie_doc)
-            await send_movie_update(bot, base_name)
+            await send_movie_update(bot, merge_key)
             movie_doc = await db.movie_updates.find_one({"_id": merge_key})
         except DuplicateKeyError:
             movie_doc = await db.movie_updates.find_one({"_id": merge_key})
@@ -539,20 +543,20 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
                 if any(f["filename"] == filename for f in movie_doc["files"]):
                     return
                 await db.movie_updates.update_one(
-                    {"_id": base_name},
+                    {"_id": merge_key},
                     {"$push": {"files": file_data}}
                 )
                 movie_doc["files"].append(file_data)
-                schedule_update(bot, base_name)
+                schedule_update(bot, merge_key)
     else:
         if any(f["filename"] == filename for f in movie_doc["files"]):
             return
         await db.movie_updates.update_one(
-            {"_id": base_name},
+            {"_id": merge_key},
             {"$push": {"files": file_data}}
         )
         movie_doc["files"].append(file_data)
-        schedule_update(bot, base_name)
+        schedule_update(bot, merge_key)
 
 async def send_movie_update(bot, base_name):
     async with send_lock:
@@ -561,10 +565,11 @@ async def send_movie_update(bot, base_name):
         for attempt in range(max_retries):
             try:
                 movie_doc = await db.movie_updates.find_one({"_id": base_name})
+                display_title = movie_doc.get("display_title", base_name)
                 if not movie_doc:
                     return None
 
-                text = generate_movie_message(movie_doc, base_name)
+                text = generate_movie_message(movie_doc, display_title)
                 buttons = InlineKeyboardMarkup([[
                     InlineKeyboardButton(
                         'ɢᴇᴛ ғɪʟᴇs',
@@ -632,10 +637,11 @@ async def send_movie_update(bot, base_name):
 async def update_movie_message(bot, base_name):
     try:
         movie_doc = await db.movie_updates.find_one({"_id": base_name})
+        display_title = movie_doc.get("display_title", base_name)
         if not movie_doc:
             return
 
-        text = generate_movie_message(movie_doc, base_name)
+        text = generate_movie_message(movie_doc, display_title)
         buttons = InlineKeyboardMarkup([[
             InlineKeyboardButton(
                 'ɢᴇᴛ ғɪʟᴇs',
