@@ -405,8 +405,8 @@ def extract_media_info(filename: str, caption: str):
         base_name = normalize(remove_ignored_words(processed_raw)) or filename
 
     # 🔥 RE-CLEAN AFTER FALLBACK
-   # base_name = clean_title_advanced(base_name)
-   # base_name = _strip_season_episode_tokens(base_name)
+    base_name = clean_title_advanced(base_name)
+    base_name = _strip_season_episode_tokens(base_name)
 
     base_name = smart_title(base_name)
 
@@ -452,8 +452,12 @@ async def process_and_send_update(bot, filename, caption):
         base_name = media_info["base_name"]
         processed = media_info["processed"]
 
-        # 🔥 MERGE KEY (NO YEAR)
-        merge_key = re.sub(r'\b(19|20)\d{2}\b', '', base_name)
+        # 🔥 MERGE KEY (SMART)
+        if media_info.get("tag") == "#SERIES":
+            merge_key = re.sub(r'\b(19|20)\d{2}\b', '', base_name)
+        else:
+            merge_key = base_name
+
         merge_key = re.sub(r'\s+', ' ', merge_key).strip().lower()
 
         lock = locks[merge_key]
@@ -518,12 +522,18 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
         if not year_val and details.get("release_date"):
             year_val = str(details.get("release_date"))[:4]
 
+        raw_genres = details.get("genres", "N/A")
+
+        if isinstance(raw_genres, list):
+            genres = ", ".join(raw_genres)
+        else:
+            genres = raw_genres
         movie_doc = {
             "_id": merge_key,
-            "display_title": base_name,
+            "display_title": movie_doc["display_title"] if movie_doc else base_name,
             "files": [file_data],
             "poster_url": details.get("backdrop_url") if LANDSCAPE_POSTER and TMDB_POSTER and details.get("backdrop_url") and not error_tmdb else details.get("poster_url"),
-            "genres": details.get("genres", "N/A"),
+            "genres": genres,
             "rating": details.get("rating", "N/A"),
             "imdb_url": details.get("url", "") if not TMDB_POSTER or error_tmdb else details.get("tmdb_url"),
             "year": year_val,
@@ -717,7 +727,7 @@ async def update_movie_message(bot, merge_key):
     except Exception as e:
         logger.error(f"Failed to update movie message for {merge_key}: {e}")
 
-def generate_movie_message(movie_doc, base_name):
+def generate_movie_message(movie_doc, display_title):
     all_formats = set()
     # 🔥 date & time (Kolkata)
     now = datetime.now(pytz.timezone("Asia/Kolkata"))
@@ -838,7 +848,7 @@ def generate_movie_message(movie_doc, base_name):
     text = script.MOVIE_UPDATE_NOTIFY_TXT.format(
         poster_url=movie_doc.get("poster_url", ""),
         imdb_url=movie_doc.get("imdb_url", ""),
-        filename=base_name,
+        filename=display_title,
         tag=primary_tag,
         genres=genres,
         ott=ott_str,
