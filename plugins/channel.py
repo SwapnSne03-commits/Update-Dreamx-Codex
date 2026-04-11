@@ -569,8 +569,6 @@ async def send_movie_update(bot, base_name):
                     return None
 
                 display_title = movie_doc.get("display_title", base_name)
-                if not movie_doc:
-                    return None
 
                 text = generate_movie_message(movie_doc, display_title)
                 buttons = InlineKeyboardMarkup([[
@@ -644,8 +642,6 @@ async def update_movie_message(bot, base_name):
             return
 
         display_title = movie_doc.get("display_title", base_name)
-        if not movie_doc:
-            return
 
         text = generate_movie_message(movie_doc, display_title)
         buttons = InlineKeyboardMarkup([[
