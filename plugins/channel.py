@@ -463,7 +463,9 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
     if not hasattr(db, 'movie_updates'):
         db.movie_updates = db.db.movie_updates
 
-    movie_doc = await db.movie_updates.find_one({"_id": base_name})
+    movie_doc = await db.movie_updates.find_one({"_id": merge_key})
+    merge_key = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
+    merge_key = re.sub(r'\s+', ' ', merge_key)
 
     error_tmdb=False
     file_data = {
@@ -512,7 +514,8 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
             year_val = str(details.get("release_date"))[:4]
 
         movie_doc = {
-            "_id": base_name,
+            "_id": merge_key,
+            "display_title": base_name,
             "files": [file_data],
             "poster_url": details.get("backdrop_url") if LANDSCAPE_POSTER and TMDB_POSTER and details.get("backdrop_url") and not error_tmdb else details.get("poster_url"),
             "genres": genres,
@@ -529,9 +532,9 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
         try:
             await db.movie_updates.insert_one(movie_doc)
             await send_movie_update(bot, base_name)
-            movie_doc = await db.movie_updates.find_one({"_id": base_name})
+            movie_doc = await db.movie_updates.find_one({"_id": merge_key})
         except DuplicateKeyError:
-            movie_doc = await db.movie_updates.find_one({"_id": base_name})
+            movie_doc = await db.movie_updates.find_one({"_id": merge_key})
             if movie_doc:
                 if any(f["filename"] == filename for f in movie_doc["files"]):
                     return
