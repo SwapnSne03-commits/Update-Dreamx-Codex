@@ -530,7 +530,7 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
             genres = raw_genres
         movie_doc = {
             "_id": merge_key,
-            "display_title": movie_doc["display_title"] if movie_doc else base_name,
+            "display_title": base_name,
             "files": [file_data],
             "poster_url": details.get("backdrop_url") if LANDSCAPE_POSTER and TMDB_POSTER and details.get("backdrop_url") and not error_tmdb else details.get("poster_url"),
             "genres": genres,
