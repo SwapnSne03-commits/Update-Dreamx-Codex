@@ -245,16 +245,17 @@ def extract_season_episode(filename: str):
     # 🔥 fallback
     return season, None
 
-def schedule_update(bot, base_name, delay=5):
-    if handle := pending_updates.get(base_name):
+def schedule_update(bot, merge_key, delay=5):
+    if handle := pending_updates.get(merge_key):
         if not handle.cancelled():
             handle.cancel()
-    
+
     loop = asyncio.get_event_loop()
-    pending_updates[base_name] = loop.call_later(
+    pending_updates[merge_key] = loop.call_later(
         delay,
-        lambda: asyncio.create_task(update_movie_message(bot, base_name))
+        lambda: asyncio.create_task(update_movie_message(bot, merge_key))
     )
+
 def extract_media_info(filename: str, caption: str):
     filename = normalize(clean_mentions_links(filename))
     caption_clean = clean_mentions_links(caption) if caption else ""
