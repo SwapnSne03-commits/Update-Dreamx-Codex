@@ -104,6 +104,48 @@ def is_strict_title_match(query: str, result: str) -> bool:
     # 🔥 short title relax
     return unmatched <= 1
 
+def smart_title_match(query: str, result: str, mode="balanced") -> bool:
+    if not query or not result:
+        return False
+
+    # 🔹 clean text
+    q = re.sub(r'[^a-z0-9 ]', '', query.lower())
+    r = re.sub(r'[^a-z0-9 ]', '', result.lower())
+
+    # 🔹 word split
+    q_words = set(q.split())
+    r_words = set(r.split())
+
+    common = q_words & r_words
+
+    # 🔥 exact containment (very strong)
+    if q in r or r in q:
+        return True
+
+    ratio = SequenceMatcher(None, q, r).ratio()
+
+    # =========================
+    # 🔥 MODES
+    # =========================
+
+    # 🔹 LOOSE (very flexible)
+    if mode == "loose":
+        return ratio >= 0.5 or bool(common)
+
+    # 🔹 STRICT (safe)
+    if mode == "strict":
+        return ratio >= 0.75 and len(common) >= len(q_words) - 1
+
+    # 🔹 BALANCED (BEST)
+    # ✔ ratio + word overlap combo
+    if mode == "balanced":
+        if ratio >= 0.6:
+            return True
+        if len(common) >= 1:
+            return True
+
+    return False
+
 def enhance_query_for_tmdb(q: str):
     """
     Enhance query for better TMDB search accuracy.
@@ -211,10 +253,11 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
     if data:
         tmdb_title = (data.get("title") or data.get("name") or "").strip()
 
-        if (
-            is_good_match(q, tmdb_title, 0.7)
-            and is_strict_title_match(q, tmdb_title)
-        ):
+        #____if (
+            #is_good_match(q, tmdb_title, 0.7)
+            #and is_strict_title_match(q, tmdb_title)
+        #): ___strict match off,
+        if smart_title_match(q, tmdb_title, mode="balanced"): #Just have to comment this line and uncomment upprer function 
             return data
         else:
             data = None
