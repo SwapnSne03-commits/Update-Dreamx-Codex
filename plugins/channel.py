@@ -467,11 +467,12 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
     # 🔥 TMDB search এর জন্য আলাদা title (with year)
     search_title = base_name
 
-    if media_info.get("year"):
+    if media_info.get("tag") == "#SERIES" and media_info.get("year"):
         search_title = f"{base_name} {media_info['year']}"
-        # 🔥 remove season remnants just in case
-        search_title = re.sub(r'\bS\d{1,2}\b', '', search_title, flags=re.I)
-        search_title = re.sub(r'\s+', ' ', search_title).strip()
+
+    # 🔥 remove season remnants just in case
+    search_title = re.sub(r'\bS\d{1,2}\b', '', search_title, flags=re.I)
+    search_title = re.sub(r'\s+', ' ', search_title).strip()
     error_tmdb=False
     file_data = {
         "filename": filename,
