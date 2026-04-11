@@ -398,7 +398,7 @@ def extract_media_info(filename: str, caption: str):
 
     # 🔥 better fallback condition (CAPTION STRICT)
     if caption_clean:
-        if not base_name or len(base_name.split()) <= 1:
+        if not base_name:
             base_name = base_raw.strip()
     else:
         base_name = normalize(remove_ignored_words(processed_raw)) or filename
