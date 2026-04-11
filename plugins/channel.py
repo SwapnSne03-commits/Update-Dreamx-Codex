@@ -451,34 +451,35 @@ async def process_and_send_update(bot, filename, caption):
         base_name = media_info["base_name"]
         processed = media_info["processed"]
 
-        merge_key = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
-        merge_key = re.sub(r'\s+', ' ', merge_key)
+        # 🔥 MERGE KEY (NO YEAR)
+        merge_key = re.sub(r'\b(19|20)\d{2}\b', '', base_name)
+        merge_key = re.sub(r'\s+', ' ', merge_key).strip().lower()
 
         lock = locks[merge_key]
         async with lock:
-            await _process_with_lock(bot, filename, caption, media_info, base_name, processed)
+            await _process_with_lock(bot, filename, caption, media_info, base_name, processed, merge_key)
+
     except PyMongoError as e:
         logger.error(f"Database error in process_and_send_update: {e}")
     except Exception as e:
         logger.exception(f"Processing failed in process_and_send_update: {e}")
 
-async def _process_with_lock(bot, filename, caption, media_info, base_name, processed):
+async def _process_with_lock(bot, filename, caption, media_info, base_name, processed, merge_key):
+
     if not hasattr(db, 'movie_updates'):
         db.movie_updates = db.db.movie_updates
 
-    merge_key = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
-    merge_key = re.sub(r'\s+', ' ', merge_key)
-
     movie_doc = await db.movie_updates.find_one({"_id": merge_key})
 
-    error_tmdb=False
+    error_tmdb = False
+
     file_data = {
         "filename": filename,
         "processed": processed,
         "quality": media_info["quality"],
         "language": media_info["language"],
-        "format": media_info.get("format"),           # ✅ ADD THIS
-        "is_combined": media_info.get("is_combined"), # ✅ ADD THIS
+        "format": media_info.get("format"),
+        "is_combined": media_info.get("is_combined"),
         "ott_platform": media_info["ott_platform"],
         "timestamp": datetime.now(),
         "tag": media_info["tag"],
@@ -486,12 +487,19 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
         "episode": media_info["episode"]
     }
 
+    # 🔥 TMDB SEARCH TITLE
+    search_title = base_name
+    if media_info.get("tag") == "#SERIES" and media_info.get("year"):
+        search_title = f"{base_name} {media_info['year']}"
+
     if not movie_doc:
         if TMDB_POSTER:
-            details = await get_movie_detailsx(base_name,is_series=(media_info["tag"] == "#SERIES"))
+            details = await get_movie_detailsx(search_title, is_series=(media_info["tag"] == "#SERIES"))
+
             if not details or details.get("error") or (not details.get("poster_url") and not details.get("backdrop_url")):
-                error_tmdb=True
+                error_tmdb = True
                 logger.info("TMDB error switching to IMDB")
+
                 imdb_query = base_name
                 if media_info.get("year"):
                     imdb_query = f"{base_name} {media_info['year']}"
@@ -503,17 +511,9 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
                 imdb_query = f"{base_name} {media_info['year']}"
 
             details = await get_movie_details(imdb_query) or {}
-    
-        raw_genres = details.get("genres", "N/A")
-        if isinstance(raw_genres, str):
-            genre_list = [g.strip() for g in raw_genres.split(",")]
-            genres = ", ".join(g for g in genre_list if g in STANDARD_GENRES) or "N/A"
-        else:
-            genres = ", ".join(g for g in raw_genres if g in STANDARD_GENRES) or "N/A"
 
-        # 🔥 ensure year always exists
+        # 🔥 YEAR SAFE
         year_val = media_info.get("year") or details.get("year")
-
         if not year_val and details.get("release_date"):
             year_val = str(details.get("release_date"))[:4]
 
@@ -522,9 +522,9 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
             "display_title": base_name,
             "files": [file_data],
             "poster_url": details.get("backdrop_url") if LANDSCAPE_POSTER and TMDB_POSTER and details.get("backdrop_url") and not error_tmdb else details.get("poster_url"),
-            "genres": genres,
+            "genres": details.get("genres", "N/A"),
             "rating": details.get("rating", "N/A"),
-            "imdb_url": details.get("url", "")if not TMDB_POSTER or error_tmdb else details.get("tmdb_url"),
+            "imdb_url": details.get("url", "") if not TMDB_POSTER or error_tmdb else details.get("tmdb_url"),
             "year": year_val,
             "tag": media_info["tag"],
             "ott_platform": media_info["ott_platform"],
@@ -533,63 +533,68 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
             "error_tmdb": error_tmdb,
             "is_backdrop": details.get("backdrop_url")
         }
+
         try:
             await db.movie_updates.insert_one(movie_doc)
             await send_movie_update(bot, merge_key)
-            movie_doc = await db.movie_updates.find_one({"_id": merge_key})
         except DuplicateKeyError:
-            movie_doc = await db.movie_updates.find_one({"_id": merge_key})
-            if movie_doc:
-                if any(f["filename"] == filename for f in movie_doc["files"]):
-                    return
-                await db.movie_updates.update_one(
-                    {"_id": merge_key},
-                    {"$push": {"files": file_data}}
-                )
-                movie_doc["files"].append(file_data)
-                schedule_update(bot, merge_key)
+            await db.movie_updates.update_one(
+                {"_id": merge_key},
+                {"$push": {"files": file_data}}
+            )
+            schedule_update(bot, merge_key)
+
     else:
         if any(f["filename"] == filename for f in movie_doc["files"]):
             return
+
         await db.movie_updates.update_one(
             {"_id": merge_key},
             {"$push": {"files": file_data}}
         )
-        movie_doc["files"].append(file_data)
+
         schedule_update(bot, merge_key)
 
-async def send_movie_update(bot, base_name):
+async def send_movie_update(bot, merge_key):
     async with send_lock:
         max_retries = 3
-        base_delay = 5
+
         for attempt in range(max_retries):
             try:
-                movie_doc = await db.movie_updates.find_one({"_id": base_name})
+                movie_doc = await db.movie_updates.find_one({"_id": merge_key})
                 if not movie_doc:
                     return None
 
-                display_title = movie_doc.get("display_title", base_name)
-
+                display_title = movie_doc.get("display_title", merge_key)
                 text = generate_movie_message(movie_doc, display_title)
+
+                # 🔥 SAFE TITLE FOR LINK
+                safe_title = re.sub(r'[^a-zA-Z0-9 ]', '', display_title)
+                safe_title = re.sub(r'\s+', '-', safe_title.strip())
+
                 buttons = InlineKeyboardMarkup([[
                     InlineKeyboardButton(
                         'ɢᴇᴛ ғɪʟᴇs',
-                        url=f"https://t.me/{temp.U_NAME}?start=getfile-{base_name.replace(' ', '-')}"
+                        url=f"https://t.me/{temp.U_NAME}?start=getfile-{safe_title}"
                     )
                 ]])
-                poster_url = get_safe_poster(movie_doc)
-                is_fallback = not bool(movie_doc.get("poster_url"))
-               # size=(2560, 1440) if LANDSCAPE_POSTER and TMDB_POSTER and movie_doc.get("is_backdrop") and not movie_doc.get("error_tmdb") else (853, 1280)
-                if is_fallback:
-                    size = (2560, 1440)  # 🔥 always landscape for fallback
-                else:
-                    size = (2560, 1440) if (LANDSCAPE_POSTER and movie_doc.get("is_backdrop") and not movie_doc.get("error_tmdb")) else (853, 1280)
 
                 poster_url = get_safe_poster(movie_doc)
+                is_fallback = not bool(movie_doc.get("poster_url"))
+
+                if is_fallback:
+                    size = (2560, 1440)
+                else:
+                    size = (
+                        (2560, 1440)
+                        if (LANDSCAPE_POSTER and movie_doc.get("is_backdrop") and not movie_doc.get("error_tmdb"))
+                        else (853, 1280)
+                    )
+
                 resized_poster = await fetch_image(poster_url, size)
-                # 🔥 FINAL FIX
+
+                # 🔥 SEND LOGIC
                 if not LINK_PREVIEW or is_fallback:
-                    # fallback হলে বা preview off হলে → photo
                     msg = await bot.send_photo(
                         chat_id=MOVIE_UPDATE_CHANNEL,
                         photo=resized_poster,
@@ -598,9 +603,7 @@ async def send_movie_update(bot, base_name):
                         parse_mode=enums.ParseMode.HTML
                     )
                     is_photo = True
-
                 else:
-                    # preview case (real poster থাকলে)
                     send_params = {
                         "chat_id": MOVIE_UPDATE_CHANNEL,
                         "text": text,
@@ -614,10 +617,12 @@ async def send_movie_update(bot, base_name):
                     msg = await bot.send_message(**send_params)
                     is_photo = False
 
+                # 🔥 FIXED (_id = merge_key)
                 await db.movie_updates.update_one(
-                    {"_id": base_name},
+                    {"_id": merge_key},
                     {"$set": {"message_id": msg.id, "is_photo": is_photo}}
                 )
+
                 try:
                     await bot.send_sticker(
                         chat_id=MOVIE_UPDATE_CHANNEL,
@@ -625,37 +630,45 @@ async def send_movie_update(bot, base_name):
                     )
                 except Exception as e:
                     logger.warning(f"Sticker send failed: {e}")
+
                 await asyncio.sleep(2)
                 return msg
+
             except FloodWait as e:
-                wait_time = e.value + 2
-                await asyncio.sleep(wait_time)
+                await asyncio.sleep(e.value + 2)
+
             except Exception as e:
                 logger.error(f"Failed to send movie update: {e}")
                 break
+
         return None
 
-async def update_movie_message(bot, base_name):
+async def update_movie_message(bot, merge_key):
     try:
-        movie_doc = await db.movie_updates.find_one({"_id": base_name})
+        movie_doc = await db.movie_updates.find_one({"_id": merge_key})
         if not movie_doc:
             return
 
-        display_title = movie_doc.get("display_title", base_name)
-
+        display_title = movie_doc.get("display_title", merge_key)
         text = generate_movie_message(movie_doc, display_title)
+
+        # 🔥 SAFE TITLE FOR LINK
+        safe_title = re.sub(r'[^a-zA-Z0-9 ]', '', display_title)
+        safe_title = re.sub(r'\s+', '-', safe_title.strip())
+
         buttons = InlineKeyboardMarkup([[
             InlineKeyboardButton(
                 'ɢᴇᴛ ғɪʟᴇs',
-                url=f"https://t.me/{temp.U_NAME}?start=getfile-{base_name.replace(' ', '-')}"
+                url=f"https://t.me/{temp.U_NAME}?start=getfile-{safe_title}"
             )
         ]])
 
         message_id = movie_doc.get("message_id")
         is_photo = movie_doc.get("is_photo", False)
 
+        # 🔥 if no message → resend
         if not message_id:
-            await send_movie_update(bot, base_name)
+            await send_movie_update(bot, merge_key)
             return
 
         try:
@@ -678,25 +691,30 @@ async def update_movie_message(bot, base_name):
                     disable_web_page_preview=not LINK_PREVIEW
                 )
             return
+
         except (MessageIdInvalid, MessageNotModified) as e:
-            logger.warning(f"Message update skipped due to error: {e}")
-            pass
+            logger.warning(f"Message update skipped: {e}")
+
         except Exception:
             try:
                 await bot.delete_messages(
                     chat_id=MOVIE_UPDATE_CHANNEL,
                     message_ids=message_id
                 )
+
                 await db.movie_updates.update_one(
-                    {"_id": base_name},
+                    {"_id": merge_key},
                     {"$set": {"message_id": None, "is_photo": False}}
                 )
+
             except Exception as e:
-                logger.error(f"Error during message deletion/update in recovery: {e}")
-                pass
-            await send_movie_update(bot, base_name)
+                logger.error(f"Recovery delete failed: {e}")
+
+            # 🔥 resend fresh
+            await send_movie_update(bot, merge_key)
+
     except Exception as e:
-        logger.error(f"Failed to update movie message for {base_name}: {e}")
+        logger.error(f"Failed to update movie message for {merge_key}: {e}")
 
 def generate_movie_message(movie_doc, base_name):
     all_formats = set()
