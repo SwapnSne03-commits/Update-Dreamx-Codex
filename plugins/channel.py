@@ -454,7 +454,7 @@ async def process_and_send_update(bot, filename, caption):
         merge_key = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
         merge_key = re.sub(r'\s+', ' ', merge_key)
 
-        lock = locks[base_name]
+        lock = locks[merge_key]
         async with lock:
             await _process_with_lock(bot, filename, caption, media_info, base_name, processed)
     except PyMongoError as e:
@@ -565,6 +565,9 @@ async def send_movie_update(bot, base_name):
         for attempt in range(max_retries):
             try:
                 movie_doc = await db.movie_updates.find_one({"_id": base_name})
+                if not movie_doc:
+                    return None
+
                 display_title = movie_doc.get("display_title", base_name)
                 if not movie_doc:
                     return None
@@ -637,6 +640,9 @@ async def send_movie_update(bot, base_name):
 async def update_movie_message(bot, base_name):
     try:
         movie_doc = await db.movie_updates.find_one({"_id": base_name})
+        if not movie_doc:
+            return
+
         display_title = movie_doc.get("display_title", base_name)
         if not movie_doc:
             return
