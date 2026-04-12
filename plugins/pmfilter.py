@@ -56,7 +56,7 @@ def smart_query_cleaner(text: str):
     text = text.lower().strip()
 
     # normalize
-    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"[^a-z0-9\s&]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
 
     if not text:
@@ -179,10 +179,10 @@ def generate_search_variants(query: str):
     variants = []
 
     # 1️⃣ remove symbols completely
-    v1 = re.sub(r"[^\w\s]", "", raw)
+    v1 = re.sub(r"[^\w\s&]", "", raw)
 
     # 2️⃣ replace symbols with space
-    v2 = re.sub(r"[^\w\s]", " ", raw)
+    v2 = re.sub(r"[^\w\s&]", " ", raw)
 
     # 3️⃣ special handling (hyphen / underscore)
     v3 = raw.replace("-", " ").replace("_", " ")
@@ -240,6 +240,37 @@ async def symbol_fallback_search(chat_id, search):
             return files, offset, total, v
 
     # ❌ nothing found
+    return [], 0, 0, search
+
+async def ampersand_fallback_search(chat_id, search):
+
+    # count occurrences
+    and_count = search.count(" and ")
+    amp_count = search.count("&")
+
+    # 👉 only allow if exactly ONE occurrence মোট
+    if (and_count + amp_count) != 1:
+        return [], 0, 0, search
+
+    variants = []
+
+    if "&" in search:
+        variants.append(search.replace("&", " and "))
+
+    elif " and " in search:
+        variants.append(search.replace(" and ", " & "))
+
+    for v in variants:
+        files, offset, total = await get_search_results(
+            chat_id,
+            v,
+            offset=0,
+            filter=True
+        )
+
+        if files:
+            return files, offset, total, v
+
     return [], 0, 0, search
 
 async def send_short_query_warning(message):
@@ -2028,6 +2059,11 @@ async def auto_filter(client, msg, spoll=False):
                     message.chat.id,
                     search
                 )
+                if not files:
+                    files, offset, total_results, search = await ampersand_fallback_search(
+                        message.chat.id,
+                        search
+                    )
                 if not files:
                     files, offset, total_results, search = await series_fallback_search(
                         message.chat.id,
