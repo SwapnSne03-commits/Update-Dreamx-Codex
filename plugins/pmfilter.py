@@ -2052,8 +2052,15 @@ async def auto_filter(client, msg, spoll=False):
                         continue
                     else:
                         search = search + x + " "
-                search = re.sub(r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|bro|bruh|broh|helo|that|find|dubbed|link|venum|iruka|pannunga|pannungga|anuppunga|anupunga|anuppungga|anupungga|film|undo|kitti|kitty|tharu|kittumo|kittum|movie|any(one)|with\ssubtitle(s)?)", "", search, flags=re.IGNORECASE)
+                #search = re.sub(r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|bro|bruh|broh|helo|that|find|dubbed|link|venum|iruka|pannunga|pannungga|anuppunga|anupunga|anuppungga|anupungga|film|undo|kitti|kitty|tharu|kittumo|kittum|movie|any(one)|with\ssubtitle(s)?)", "", search, flags=re.IGNORECASE)
+                removal_pattern = r"\b(pls|plz|please|send|snd|give|giv|gib|movie(s)?|new|latest|that|find|any(one)?)\b"
+
+                search = re.sub(removal_pattern, "", search, flags=re.IGNORECASE)
+
+                # slang (safe boundary)
+                search = re.sub(r"\b(bro|bruh|broh|helo)\b", "", search, flags=re.IGNORECASE)
                 search = search.replace("-", " ")
+                search = re.sub(r"\s+", " ", search).strip()
                 search = re.sub(r"[:']", "", search)
                 files, offset, total_results, search = await symbol_fallback_search(
                     message.chat.id,
