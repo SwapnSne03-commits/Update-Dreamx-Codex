@@ -97,6 +97,8 @@ def minimal_clean(text: str) -> str:
 
     text = unicodedata.normalize("NFKD", text)
 
+    text = text.replace("&", " and ")
+
     # remove usernames
     text = re.sub(r'@\w+', '', text)
 
@@ -107,7 +109,7 @@ def minimal_clean(text: str) -> str:
     text = re.sub(r'[\U00010000-\U0010ffff]', '', text)
 
     # 🔥 FIX: remove ALL special chars including _
-    text = re.sub(r'[^a-zA-Z0-9\u0980-\u09FF\u0900-\u097F\s]', ' ', text)
+    text = re.sub(r'[^a-zA-Z0-9\u0980-\u09FF\u0900-\u097F\s&]', ' ', text)
 
     # collapse spaces
     text = re.sub(r'[ \t]+', ' ', text).strip()
