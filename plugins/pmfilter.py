@@ -2175,9 +2175,24 @@ async def auto_filter(client, msg, spoll=False):
             btn.append([InlineKeyboardButton(
                 text="↭ ɴᴏ ᴍᴏʀᴇ ᴘᴀɢᴇꜱ ᴀᴠᴀɪʟᴀʙʟᴇ ↭", callback_data="pages")])
 
-        if settings.get('imdb'):
-            imdb = await get_poster(search, file=(files[0]).file_name)   # IMDb first
-            tmdb = await get_posterx(search, file=(files[0]).file_name)  # TMDB fallback
+        if settings.get('imdb') and files:
+
+            try:
+                imdb = await get_poster(search, file=(files[0]).file_name)
+            except Exception as e:
+                print("IMDB ERROR:", e)
+                imdb = None
+
+            try:
+                tmdb = await get_posterx(search, file=(files[0]).file_name)
+            except Exception as e:
+                print("TMDB ERROR:", e)
+                tmdb = None
+
+            # ✅ fallback logic
+            if not imdb:
+                imdb = tmdb
+
         else:
             imdb = None
             tmdb = None
