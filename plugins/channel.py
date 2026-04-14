@@ -82,7 +82,7 @@ QUALITY_PATTERN = re.compile(
     re.IGNORECASE
 )
 FORMAT_PATTERN = re.compile(
-    r"\b(?:WEB-DL|WEBRip|BluRay|HDRip|DVDRip|HDTV|CAM|HDCAM|HDTS)\b",
+    r"\b(?:WEB-DL|WEBRip|BluRay|HDRip|DVDRip|HDTV|CAM|HDCAM|HDTC|HDTS)\b",
     re.IGNORECASE
 )
 YEAR_PATTERN = re.compile(r"(?<![A-Za-z0-9])(?:19|20)\d{2}(?![A-Za-z0-9])")
