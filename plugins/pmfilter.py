@@ -43,7 +43,7 @@ IGNORE_WORDS = [
     "south movie", "south indian", "web-series", "web series", "webseries", "hindi me bhejo",
     "ful", "!", "kro", "jaldi", "audio", "language", "mkv", "mp4", "web", "series",
     "hollywood", "all", "bollywood", "south", "hd", "karo", "upload", "bhejo",
-    "fullepisode", "bengali", "please", "plz", "hindi", "seasons", "request", "#request", "send", "link", "dabbbed", "dubbed",
+    "fullepisode", "combined", "combine", "merge", "combin", "bengali", "please", "plz", "hindi", "seasons", "request", "#request", "send", "link", "dabbbed", "dubbed",
 ]
 QUALITY_WORDS = {"360p", "480p", "144p","720p", "1080p", "1440p", "2160p", "4k"}
 
