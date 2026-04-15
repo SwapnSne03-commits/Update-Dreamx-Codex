@@ -142,14 +142,14 @@ def season_to_title(search: str):
 
 async def series_fallback_search(chat_id, search):
 
-    # 🔥 normalize first
-    search = normalize_season_format(search)
-
     if not is_series_query(search):
         return [], 0, 0, search
 
+    # 🔥 normalize
+    normalized = normalize_season_format(search)
+
     # 1️⃣ Episode → Season
-    season_query = episode_to_season(search)
+    season_query = episode_to_season(normalized)
 
     if season_query and season_query != search:
         files, offset, total = await get_search_results(
@@ -158,7 +158,15 @@ async def series_fallback_search(chat_id, search):
         if files:
             return files, offset, total, season_query
 
-    # 2️⃣ Season → Title
+    # 🔥 2️⃣ Season → Normalized Season (MOST IMPORTANT)
+    if normalized != search:
+        files, offset, total = await get_search_results(
+            chat_id, normalized, offset=0, filter=True
+        )
+        if files:
+            return files, offset, total, normalized
+
+    # 3️⃣ Season → Title
     title_query = season_to_title(search)
 
     if title_query and title_query != search:
@@ -2044,7 +2052,6 @@ async def auto_filter(client, msg, spoll=False):
                 message_text = message.text or ""
                 search = message_text.lower()
                 search = smart_query_cleaner(search)
-                search = normalize_season_format(search)
 
                 if not search:
                     await send_short_query_warning(message)
