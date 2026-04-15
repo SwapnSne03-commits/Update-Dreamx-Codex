@@ -121,11 +121,17 @@ def episode_to_season(search: str):
     ).strip()
 
 def normalize_season_format(search: str):
-    # season 5 → s05
-    search = re.sub(r"season[\s\-\:\._]*(\d{1,2})", r"s\1", search, flags=re.IGNORECASE)
 
-    # s5 → s05
-    search = re.sub(r"\bs(\d)\b", r"s0\1", search, flags=re.IGNORECASE)
+    # season 5 → s05
+    search = re.sub(r"\bseason[\s\-\:\._]*(\d{1,2})\b", r"s\1", search, flags=re.IGNORECASE)
+
+    # s5 / s01 → always s01 format
+    search = re.sub(
+        r"\bs(\d{1,2})\b",
+        lambda m: f"s{int(m.group(1)):02d}",
+        search,
+        flags=re.IGNORECASE
+    )
 
     return search
 
@@ -2038,6 +2044,7 @@ async def auto_filter(client, msg, spoll=False):
                 message_text = message.text or ""
                 search = message_text.lower()
                 search = smart_query_cleaner(search)
+                search = normalize_season_format(search)
 
                 if not search:
                     await send_short_query_warning(message)
