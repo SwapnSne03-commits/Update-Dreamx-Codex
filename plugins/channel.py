@@ -25,7 +25,7 @@ FALLBACK_POSTER = "https://i.ibb.co/JFjcKPRb/photo-2026-04-04-02-38-04-762472789
 # Precomputed sets for faster lookups
 IGNORE_WORDS = {
     "rarbg", "dub", "sub", "sample", "mkv", "aac", "combined",
-    "action", "adventure", "animation", "biography", "comedy", 
+    "animation", "biography", "comedy", 
     "documentary", "drama", "fantasy", "film-noir", "history", 
     "horror", "music", "musical", "mystery", "romance", "sci-fi", "sport", 
     "thriller", "western", "hdcam", "hdtc", "camrip", "ts", "tc", 
