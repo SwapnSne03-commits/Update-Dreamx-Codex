@@ -45,6 +45,7 @@ FSUB_PICS = (environ.get('FSUB_IMG', 'https://i.ibb.co/cShkPjcZ/x.jpg')).split()
 # ============================
 ADMINS = [int(admin) if id_pattern.search(admin) else admin for admin in environ.get('ADMINS', '7859995064').split()] # Replace with the actual admin ID(s) to add
 CHANNELS = [int(ch) if id_pattern.search(ch) else ch for ch in environ.get('CHANNELS', '-1002533229703 -1002633335930 -1002533695302').split()]  # Channel id for auto indexing (make sure bot is admin)
+ALLOW_PM = [int(x) for x in environ.get("ALLOW_PM", "").split() if x] #Person who will allowed in pm search if it off
 
 LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1002900228022'))  # Log channel id (make sure bot is admin)
 BIN_CHANNEL = int(environ.get('BIN_CHANNEL', '-1002900228022'))  # Bin channel id (make sure bot is admin)
