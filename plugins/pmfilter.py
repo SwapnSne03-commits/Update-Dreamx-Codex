@@ -343,7 +343,6 @@ async def give_filter(client, message):
                 [[InlineKeyboardButton("🔍 ᴊᴏɪɴ ᴀɴᴅ ꜱᴇᴀʀᴄʜ ʜᴇʀᴇ 🔎", url=GRP_LNK)]])
         )
 
-
 @Client.on_message(filters.private & filters.text & filters.incoming & ~filters.regex(r"^/") & ~filters.regex(r"(https?://)?(t\.me|telegram\.me|telegram\.dog)/"))
 async def pm_text(bot, message):
     bot_id = bot.me.id
@@ -361,8 +360,24 @@ async def pm_text(bot, message):
     try:
         await mdb.update_top_messages(user_id, content)
         pm_search = await db.pm_search_status(bot_id)
-        if pm_search:
+
+        # 🔥 allow system (ENV + ADMINS)
+        is_allowed_user = user_id in ALLOW_PM or user_id in ADMINS
+
+        if pm_search or is_allowed_user:
+
+            settings = await get_settings(message.chat.id)
+
+            if not settings:
+                settings = {}
+
+            # 🔥 global control respect করবে
+            settings['imdb'] = IMDB
+            settings['template'] = IMDB
+            settings['tmdb'] = TMDB_ON_SEARCH
+
             await auto_filter(bot, message)
+
         else:
             await message.reply_text(
                 text=(
@@ -380,7 +395,6 @@ async def pm_text(bot, message):
                                    )
     except Exception:
         pass
-
 
 @Client.on_callback_query(filters.regex(r"^reffff"))
 async def refercall(bot, query):
