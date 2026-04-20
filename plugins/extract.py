@@ -115,6 +115,26 @@ def fmt_lang(code):
 
     return code.upper()
 
+def clean_audio_codec(track):
+    fmt = (track.format or "").lower()
+    comp = (track.format_commercial or "").lower()
+
+    # Priority: commercial নাম (more user-friendly)
+    if "dolby digital plus" in comp or "e-ac-3" in fmt:
+        return "DDP"
+    if "dolby digital" in comp or "ac-3" in fmt:
+        return "DD"
+    if "he-aac" in comp:
+        return "HE-AAC"
+    if "aac" in fmt:
+        return "AAC"
+    if "dts" in fmt:
+        return "DTS"
+    if "mp3" in fmt or "mpeg" in fmt:
+        return "MP3"
+
+    return fmt.upper() if fmt else "Unknown"
+    
 # ======================================
 # Telegraph init (UNCHANGED)
 # ======================================
@@ -264,25 +284,33 @@ async def extract_data_handler(client: Client, query: CallbackQuery):
 
             # ================= AUDIO =================
             elif ttype == "audio":
-                lang = (
+                lang_raw = (
                     track.other_language[0]
                     if getattr(track, "other_language", None)
-                    else track.language or "und"
+                    else track.language
                 )
 
-                lang = fmt_lang(lang)
+                # 🔥 und / unknown fix
+                if not lang_raw or str(lang_raw).lower() in ["und", "undefined", "unknown"]:
+                    lang = "Unknown"
+                else:
+                    lang = fmt_lang(lang_raw)
 
-                codec = (track.format or "").replace("E-AC-3", "DDP").replace("AC-3", "DD")
+                codec = clean_audio_codec(track)
                 channels = track.channel_s or track.channels or ""
                 bitrate = ""
 
                 if channels:
                     try:
                         ch = float(channels)
-                        if ch == 6:
+                        if ch == 8:
+                            channels = "7.1"
+                        elif ch == 6:
                             channels = "5.1"
                         elif ch == 2:
                             channels = "2.0"
+                        elif ch == 1:
+                            channels = "1.0"
                     except:
                         pass
 
