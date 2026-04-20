@@ -139,9 +139,16 @@ def smart_title_match(query: str, result: str, mode="balanced") -> bool:
     # 🔹 BALANCED (BEST)
     # ✔ ratio + word overlap combo
     if mode == "balanced":
-        if ratio >= 0.6:
+        # 🔥 strong similarity
+        if ratio >= 0.65:
             return True
-        if len(common) >= 1:
+
+        # 🔥 allow single-word titles
+        if len(q_words) == 1:
+            return q_words[0] in t_words or ratio >= 0.6
+
+        # 🔥 avoid weak overlap
+        if len(common) >= max(2, len(q_words) // 2):
             return True
 
     return False
@@ -256,8 +263,10 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
         #____if (
             #is_good_match(q, tmdb_title, 0.7)
             #and is_strict_title_match(q, tmdb_title)
-        #): ___strict match off,
-        if smart_title_match(q, tmdb_title, mode="balanced"): #Just have to comment this line and uncomment upprer function 
+        #): (strict match off)
+        
+        #accept only if BOTH pass
+        if data and smart_title_match(q, tmdb_title, mode="balanced") and is_strict_title_match(q, tmdb_title): ##Just have to comment this line and uncomment upprer function
             return data
         else:
             data = None
