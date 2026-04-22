@@ -584,9 +584,13 @@ async def send_movie_update(bot, merge_key):
                 safe_title = re.sub(r'\s+', '-', safe_title.strip())
 
                 buttons = InlineKeyboardMarkup([[
+                    #InlineKeyboardButton(
+                        #'ɢᴇᴛ ғɪʟᴇs',
+                        #url=f"https://t.me/{temp.U_NAME}?start=getfile-{safe_title}"
+                    #)
                     InlineKeyboardButton(
-                        'ɢᴇᴛ ғɪʟᴇs',
-                        url=f"https://t.me/{temp.U_NAME}?start=getfile-{safe_title}"
+                        'ʀᴇǫᴜᴇsᴛ ᴛᴏ ɢᴇᴛ ғɪʟᴇs',
+                        url="https://t.me/Graduate_Request_Pro"
                     )
                 ]])
 
