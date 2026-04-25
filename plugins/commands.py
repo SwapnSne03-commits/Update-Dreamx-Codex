@@ -257,7 +257,7 @@ async def start(client, message):
     reply_markup=reply_markup,
     disable_web_page_preview=True
             )
-            await sticker.delete()
+            #await sticker.delete()
             await asyncio.sleep(2) 
             if not await db.get_chat(message.chat.id):
                 total=await client.get_chat_members_count(message.chat.id)
