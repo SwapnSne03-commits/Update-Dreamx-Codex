@@ -13,7 +13,7 @@ from datetime import datetime
 from database.refer import referdb
 from database.config_db import mdb
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup
-from pyrogram import Client, filters, enums
+from pyrogram import Client, filters, enums, StopPropagation
 from pyrogram.errors import FloodWait, ChatAdminRequired, UserNotParticipant , ChannelInvalid, PeerIdInvalid
 from database.ia_filterdb import Media, Media2, get_file_details, unpack_new_file_id, get_bad_files, save_file
 from database.users_chats_db import db
@@ -183,6 +183,7 @@ def clean_special_words(text: str) -> str:
 
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
+    sticker = None
     try:
         #stick_id = "CAACAgUAAxkBAAEKwzFpxnU7J6fYWjc-ZPPLZoGpdmzsHQACmgADyJRkFCxl4eFc7yVqHgQ"
         #try:
@@ -393,8 +394,8 @@ async def start(client, message):
             movies = message.command[1].split("-", 1)[1] 
             movie = movies.replace('-',' ')
             message.text = movie 
-            await auto_filter(client, message) 
-            return
+            await auto_filter(client, message)
+            raise StopPropagation
 
         data = message.command[1]
         try:
@@ -662,6 +663,8 @@ async def start(client, message):
         await msg.delete()
         await k.edit_text("<b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ !!</b>")
         return
+    except StopPropagation:
+        raise
     except Exception as e:
         logger.exception(f"Error In /start command - {e}")
         pass
