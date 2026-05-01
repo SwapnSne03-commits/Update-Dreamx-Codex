@@ -165,6 +165,7 @@ EMOJI_MODE = bool(environ.get('EMOJI_MODE', True))  # Emoji status On (True) / O
 BUTTON_MODE = is_enabled((environ.get('BUTTON_MODE', "True")), False) # pm & Group button or link mode (True) / Off (False)
 STREAM_MODE = bool(environ.get('STREAM_MODE', False)) # Set Stream mode True or False
 PREMIUM_STREAM_MODE = bool(environ.get('PREMIUM_STREAM_MODE', False)) # Set Stream mode True or False only for premium users
+MAINTENANCE = is_enabled(environ.get('MAINTENANCE', "False"), False)
 
 
 # ============================
@@ -254,6 +255,7 @@ Bot_cmds = {
     "reset_group": "Group Setting Default",
     "trial_reset": "User Trial Reset",
     "remove_fsub": "Remove Forced Subscription (group admin only)",
+    "maintenance": "Maintenance Mode (Admin Only)",
 }
 
 
