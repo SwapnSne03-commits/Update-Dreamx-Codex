@@ -1,23 +1,26 @@
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from info import ADMINS, MAINTENANCE
+from info import ADMINS, SUPPORT_CHAT_ID
 from database.users_chats_db import db
 from Script import script
 import logging
 
 logger = logging.getLogger(__name__)
 
-@Client.on_message(filters.incoming & ~filters.user(ADMINS), group=-5)
+
+
+@Client.on_message(filters.text & (filters.group | filters.private) & filters.incoming & ~filters.regex(r"^/") & ~filters.user(ADMINS) & ~filters.chat(SUPPORT_CHAT_ID), group=-5)
 async def maintenance_interceptor(bot: Client, message: Message):
     bot_id = bot.me.id
     if await db.maintenance_status(bot_id):
+        user_mention = message.from_user.mention if message.from_user else "User"
         await message.reply_text(
-            text=script.MAINTENANCE_TXT.format(message.from_user.mention),
+            text=script.MAINTENANCE_TXT.format(user_mention),
             parse_mode=enums.ParseMode.HTML
         )
         message.stop_propagation()
 
-@Client.on_callback_query(~filters.user(ADMINS), group=-5)
+@Client.on_callback_query(~filters.user(ADMINS) & ~filters.chat(SUPPORT_CHAT_ID), group=-5)
 async def maintenance_callback_interceptor(bot: Client, query: CallbackQuery):
     bot_id = bot.me.id
     if await db.maintenance_status(bot_id):
