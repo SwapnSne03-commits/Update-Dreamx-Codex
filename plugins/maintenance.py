@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-@Client.on_message(filters.incoming & ~filters.user(ADMINS), group=-1)
+@Client.on_message(filters.incoming & ~filters.user(ADMINS), group=-5)
 async def maintenance_interceptor(bot: Client, message: Message):
     bot_id = bot.me.id
     if await db.maintenance_status(bot_id):
@@ -17,7 +17,7 @@ async def maintenance_interceptor(bot: Client, message: Message):
         )
         message.stop_propagation()
 
-@Client.on_callback_query(~filters.user(ADMINS), group=-1)
+@Client.on_callback_query(~filters.user(ADMINS), group=-5)
 async def maintenance_callback_interceptor(bot: Client, query: CallbackQuery):
     bot_id = bot.me.id
     if await db.maintenance_status(bot_id):
