@@ -47,6 +47,13 @@ IGNORE_WORDS = [
 ]
 QUALITY_WORDS = {"360p", "480p", "144p","720p", "1080p", "1440p", "2160p", "4k"}
 
+async def delete_after_time(message):
+    await asyncio.sleep(DELETE_TIME)
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
 def smart_query_cleaner(text: str):
     if not text:
         return None
@@ -315,6 +322,7 @@ async def give_filter(client, message):
         except Exception:
             await message.react(emoji="⚡️")
             pass
+    asyncio.create_task(delete_after_time(message))
     await mdb.update_top_messages(message.from_user.id, message.text)
     if message.chat.id != SUPPORT_CHAT_ID:
         settings = await get_settings(message.chat.id)
@@ -355,6 +363,7 @@ async def pm_text(bot, message):
         except Exception:
             await message.react(emoji="⚡️")
             pass
+    asyncio.create_task(delete_after_time(message))
     if content.startswith(("#")):
         return
     try:
