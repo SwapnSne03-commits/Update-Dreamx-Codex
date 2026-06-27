@@ -1283,12 +1283,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 )
             ])
 
-        btn.append([
-            InlineKeyboardButton(
-                "⬅️ Back To Main",
-                callback_data=f"sf:main:{key}"
-            )
-        ])
+        if action_type != "main":
+            btn.append([
+                InlineKeyboardButton(
+                    "⬅️ Back To Main",
+                    callback_data=f"sf:main:{key}"
+                )
+            ])
         try:
             await query.edit_message_reply_markup(
                 reply_markup=InlineKeyboardMarkup(btn)
