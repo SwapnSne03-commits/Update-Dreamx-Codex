@@ -1241,10 +1241,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
             key=key,
             settings=settings,
         )
-        await query.answer(
-            f"Query: {search}\nFiles: {len(files)}",
-            show_alert=True
-        )
+        try:
+            await query.edit_message_reply_markup(
+                reply_markup=InlineKeyboardMarkup(btn)
+            )
+        except MessageNotModified:
+            pass
+
+        await query.answer()
         return
         
     if handled:
