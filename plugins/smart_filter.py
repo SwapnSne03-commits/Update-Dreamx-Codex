@@ -645,6 +645,8 @@ async def handle_main(client, query, data):
 
         return True
 
+    session["current_query"] = session["query"]
+    
     await query.message.edit_reply_markup(
         reply_markup=build_main_filter_buttons(key)
     )
