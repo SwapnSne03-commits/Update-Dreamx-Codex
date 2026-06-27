@@ -2277,6 +2277,7 @@ async def auto_filter(client, msg, spoll=False):
             btn.append([InlineKeyboardButton(
                 text="↭ ɴᴏ ᴍᴏʀᴇ ᴘᴀɢᴇꜱ ᴀᴠᴀɪʟᴀʙʟᴇ ↭", callback_data="pages")])
 
+        btn = add_smart_filter_buttons(btn, key)
         if settings.get('imdb') and files:
 
             try:
