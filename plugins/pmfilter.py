@@ -2203,7 +2203,10 @@ async def auto_filter(client, msg, spoll=False):
                              #  "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
                       # ]
                       # )
-        
+
+        smart_row = build_main_filter_buttons(key).inline_keyboard[0]
+
+        btn.insert(0, smart_row)
         if offset != "":
             req = message.from_user.id if message.from_user else 0
             if ULTRA_FAST_MODE:
