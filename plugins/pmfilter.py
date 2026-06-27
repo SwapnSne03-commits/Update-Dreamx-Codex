@@ -1231,8 +1231,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
     if isinstance(handled, dict):
 
-        search = handled["search"]
-        key = handled["key"]
+        action_type = handled.get("type")
+
+        search = handled.get("search")
+        key = handled.get("key")
 
         settings = await get_settings(query.message.chat.id)
 
