@@ -445,6 +445,29 @@ def add_smart_filter_buttons(btn, key):
 
     return btn
 
+def build_result_keyboard(
+    files,
+    key,
+    settings,
+    offset,
+    total_results,
+    req,
+):
+    """
+    Common keyboard builder.
+
+    Used by:
+
+    - auto_filter()
+    - next_page()
+    - smart_filter
+    - back_to_main
+    """
+
+    btn = []
+
+    return btn
+
 @Client.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
