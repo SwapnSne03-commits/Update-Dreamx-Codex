@@ -436,6 +436,15 @@ async def refercall(bot, query):
     )
     await query.answer()
 
+def add_smart_filter_buttons(btn, key):
+    """
+    Insert Smart Filter row at the top of any keyboard.
+    """
+
+    btn[0:0] = build_main_filter_buttons(key)
+
+    return btn
+
 @Client.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
@@ -2239,6 +2248,8 @@ async def auto_filter(client, msg, spoll=False):
         else:
             btn.append([InlineKeyboardButton(
                 text="↭ ɴᴏ ᴍᴏʀᴇ ᴘᴀɢᴇꜱ ᴀᴠᴀɪʟᴀʙʟᴇ ↭", callback_data="pages")])
+
+        btn = add_smart_filter_buttons(btn, key)
 
         if settings.get('imdb') and files:
 
