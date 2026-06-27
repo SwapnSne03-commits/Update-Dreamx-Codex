@@ -731,7 +731,10 @@ async def handle_set(client, query, data):
     # Next Step:
     # pmfilter.py will perform get_search_results(search)
 
-    return search
+    return {
+        "search": search,
+        "key": key,
+    }
 def has_active_filters(key: str):
 
     session = get_session(key)
