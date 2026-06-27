@@ -634,6 +634,8 @@ async def next_page(bot, query):
                             "ɴᴇxᴛ ⋟", callback_data=f"next_{req}_{key}_{n_offset}")
                     ],
                 )
+
+    btn = add_smart_filter_buttons(btn, key)
     if not settings["button"]:
         cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
         time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - \
