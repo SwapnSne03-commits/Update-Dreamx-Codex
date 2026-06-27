@@ -14,6 +14,12 @@ from Script import script
 from pyrogram.errors.exceptions.bad_request_400 import MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
 from database.refer import referdb
 from database.users_chats_db import db
+from plugins.smart_filter import (
+    create_session,
+    build_available_filters,
+    build_main_filter_buttons,
+    handle_callback,
+)
 import asyncio
 import re
 import math
@@ -1132,6 +1138,10 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
 @Client.on_callback_query(group=10)
 async def cb_handler(client: Client, query: CallbackQuery):
     DreamxData = query.data
+    handled = await handle_callback(client, query)
+
+    if handled:
+        return
     try:
         link = await client.create_chat_invite_link(int(REQST_CHANNEL))
     except:
