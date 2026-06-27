@@ -1,0 +1,737 @@
+import re
+import time
+import asyncio
+
+from pyrogram import Client, filters
+from pyrogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    CallbackQuery
+)
+
+# -----------------------------
+# Smart Filter Cache
+# -----------------------------
+
+FILTER_CACHE = {}
+
+CACHE_EXPIRE = 1800      # 30 Minutes
+_CLEANER_STARTED = False
+
+def create_session(key: str, query: str, files: list):
+    """
+    Create a new smart filter session.
+    """
+
+    FILTER_CACHE[key] = {
+        "query": query,
+        "all_files": list(files),
+        "current_files": list(files),
+
+        "selected": {
+            "season": None,
+            "language": None,
+            "quality": None
+        },
+
+        "available": {
+            "season": [],
+            "language": [],
+            "quality": []
+        },
+
+        "created": time.time(),
+        "updated": time.time()
+    }
+
+
+def get_session(key: str):
+
+    data = FILTER_CACHE.get(key)
+
+    if not data:
+        return None
+
+    data["updated"] = time.time()
+
+    return data
+
+
+def delete_session(key: str):
+
+    FILTER_CACHE.pop(key, None)
+
+
+def touch_session(key: str):
+
+    if key in FILTER_CACHE:
+        FILTER_CACHE[key]["updated"] = time.time()
+
+async def cache_cleaner():
+
+    while True:
+
+        now = time.time()
+
+        remove = []
+
+        for key, value in list(FILTER_CACHE.items()):
+
+            if now - value["updated"] > CACHE_EXPIRE:
+
+                remove.append(key)
+
+        for key in remove:
+
+            FILTER_CACHE.pop(key, None)
+
+        await asyncio.sleep(300)
+
+def start_cache_cleaner(loop):
+    global _CLEANER_STARTED
+
+    if _CLEANER_STARTED:
+        return
+
+    _CLEANER_STARTED = True
+    loop.create_task(cache_cleaner())
+
+# -----------------------------
+# Season Detection
+# -----------------------------
+
+SEASON_PATTERNS = [
+
+    # S01 / S1 / s03
+    re.compile(r"\bS(?:EASON)?[\s._-]?(\d{1,2})\b", re.IGNORECASE),
+
+    # Season 1 / Season-01
+    re.compile(r"\bSEASON[\s._-]?(\d{1,2})\b", re.IGNORECASE),
+
+    # S01E05 / S1E8
+    re.compile(r"\bS(\d{1,2})[\s._-]?E\d{1,3}\b", re.IGNORECASE),
+
+]
+
+def normalize_season(season: int | str):
+
+    try:
+        season = int(season)
+        return f"S{season:02d}"
+    except:
+        return None
+  
+def extract_season(filename: str):
+
+    """
+    Return:
+        S01
+        S02
+        ...
+        None
+    """
+
+    if not filename:
+        return None
+
+    for pattern in SEASON_PATTERNS:
+
+        match = pattern.search(filename)
+
+        if match:
+
+            return normalize_season(match.group(1))
+
+    return None
+
+# -----------------------------
+# Quality Detection
+# -----------------------------
+
+QUALITY_PATTERNS = {
+    "2160p": [
+        r"\b2160p\b",
+        r"\b4k\b",
+        r"\buhd\b"
+    ],
+
+    "1440p": [
+        r"\b1440p\b"
+    ],
+
+    "1080p": [
+        r"\b1080p\b",
+        r"\b1080\b"
+    ],
+
+    "720p": [
+        r"\b720p\b",
+        r"\b720\b"
+    ],
+
+    "480p": [
+        r"\b480p\b",
+        r"\b480\b"
+    ],
+
+    "360p": [
+        r"\b360p\b",
+        r"\b360\b"
+    ],
+
+    "240p": [
+        r"\b240p\b",
+        r"\b240\b"
+    ]
+}
+
+
+def extract_quality(filename: str):
+
+    """
+    Return:
+        2160p
+        1080p
+        720p
+        ...
+        None
+    """
+
+    if not filename:
+        return None
+
+    filename = filename.lower()
+
+    for quality, patterns in QUALITY_PATTERNS.items():
+
+        for pattern in patterns:
+
+            if re.search(pattern, filename, re.IGNORECASE):
+                return quality
+
+    return None
+
+# -----------------------------
+# Language Detection
+# -----------------------------
+
+LANGUAGE_PATTERNS = {
+
+    "Hindi": [
+        r"\bhindi\b",
+        r"\bhin\b"
+    ],
+
+    "English": [
+        r"\benglish\b",
+        r"\beng\b"
+    ],
+
+    "Bengali": [
+        r"\bbengali\b",
+        r"\bbangla\b"
+    ],
+
+    "Tamil": [
+        r"\btamil\b",
+        r"\btam\b"
+    ],
+
+    "Telugu": [
+        r"\btelugu\b",
+        r"\btel\b"
+    ],
+
+    "Malayalam": [
+        r"\bmalayalam\b",
+        r"\bmal\b"
+    ],
+
+    "Kannada": [
+        r"\bkannada\b",
+        r"\bkan\b"
+    ],
+
+    "Marathi": [
+        r"\bmarathi\b"
+    ],
+
+    "Punjabi": [
+        r"\bpunjabi\b"
+    ],
+
+    "Gujarati": [
+        r"\bgujarati\b"
+    ],
+
+    "Bhojpuri": [
+        r"\bbhojpuri\b"
+    ],
+
+    "Korean": [
+        r"\bkorean\b"
+    ],
+
+    "Japanese": [
+        r"\bjapanese\b"
+    ],
+
+    "Chinese": [
+        r"\bchinese\b"
+    ],
+
+    "French": [
+        r"\bfrench\b"
+    ],
+
+    "Spanish": [
+        r"\bspanish\b"
+    ]
+}
+
+
+SPECIAL_LANGUAGE_PATTERNS = {
+
+    "Dual Audio": [
+        r"dual[\s\-]?audio",
+        r"dual"
+    ],
+
+    "Multi Audio": [
+        r"multi[\s\-]?audio",
+        r"multi[\s\-]?lang",
+        r"multi"
+    ]
+}
+
+
+def extract_languages(filename: str):
+
+    """
+    Returns:
+        ["Hindi"]
+
+        ["Hindi","English"]
+
+        ["Dual Audio","Hindi","English"]
+
+        ["Multi Audio","Hindi","Tamil","Telugu"]
+    """
+
+    if not filename:
+        return []
+
+    filename = filename.lower()
+
+    found = []
+
+    for special, patterns in SPECIAL_LANGUAGE_PATTERNS.items():
+
+        for pattern in patterns:
+
+            if re.search(pattern, filename):
+
+                found.append(special)
+
+                break
+
+    for language, patterns in LANGUAGE_PATTERNS.items():
+
+        for pattern in patterns:
+
+            if re.search(pattern, filename):
+
+                found.append(language)
+
+                break
+
+    return list(dict.fromkeys(found))
+
+# -----------------------------
+# Build Available Filters
+# -----------------------------
+
+def build_available_filters(key: str):
+
+    session = get_session(key)
+
+    if not session:
+        return
+
+    seasons = set()
+    qualities = set()
+    languages = set()
+
+    for file in session["all_files"]:
+
+        filename = getattr(file, "file_name", "") or ""
+
+        # Season
+        season = extract_season(filename)
+        if season:
+            seasons.add(season)
+
+        # Quality
+        quality = extract_quality(filename)
+        if quality:
+            qualities.add(quality)
+
+        # Language
+        langs = extract_languages(filename)
+        for lang in langs:
+            languages.add(lang)
+
+    session["available"]["season"] = sorted(
+        seasons,
+        key=lambda x: int(x[1:])
+    )
+
+    session["available"]["quality"] = sorted(
+        qualities,
+        key=lambda x: int(x.replace("p", "")),
+        reverse=True
+    )
+
+    session["available"]["language"] = sorted(languages)
+
+def refresh_available_filters(key: str):
+
+    build_available_filters(key)
+
+    touch_session(key)
+
+# -----------------------------
+# Keyboard Builder
+# -----------------------------
+
+FILTER_NAMES = {
+
+    "season": "Season",
+
+    "language": "Language",
+
+    "quality": "Quality"
+
+}
+
+def build_main_filter_buttons():
+
+    return [
+
+        [
+
+            InlineKeyboardButton(
+                "📺 Season",
+                callback_data="sf:season"
+            ),
+
+            InlineKeyboardButton(
+                "🌐 Language",
+                callback_data="sf:language"
+            ),
+
+            InlineKeyboardButton(
+                "🎥 Quality",
+                callback_data="sf:quality"
+            )
+
+        ]
+
+    ]
+
+def build_filter_keyboard(key: str, filter_name: str):
+
+    session = get_session(key)
+
+    if not session:
+        return InlineKeyboardMarkup([])
+
+    rows = []
+
+    values = session["available"].get(filter_name, [])
+
+    # No options found
+    if not values:
+        rows.append([
+            InlineKeyboardButton(
+                "❌ No Options Found",
+                callback_data="sf:none"
+            )
+        ])
+
+    else:
+
+        for index, value in enumerate(values):
+
+            rows.append([
+                InlineKeyboardButton(
+                    text=value,
+                    callback_data=f"sf:set:{filter_name}:{index}:{key}"
+                )
+            ])
+
+    # Back button
+    rows.append([
+        InlineKeyboardButton(
+            "⬅️ Back To Main",
+            callback_data=f"sf:main:{key}"
+        )
+    ])
+
+    return InlineKeyboardMarkup(rows)
+
+def get_filter_value(key: str, filter_name: str, index: int):
+
+    session = get_session(key)
+
+    if not session:
+        return None
+
+    values = session["available"].get(filter_name, [])
+
+    if index < 0 or index >= len(values):
+        return None
+
+    return values[index]
+
+
+def session_exists(key: str):
+
+    return key in FILTER_CACHE
+
+# -----------------------------
+# Filter State
+# -----------------------------
+
+def set_filter(key: str, filter_name: str, value):
+
+    session = get_session(key)
+
+    if not session:
+        return
+
+    session["selected"][filter_name] = value
+
+    touch_session(key)
+
+def clear_filters(key: str):
+
+    session = get_session(key)
+
+    if not session:
+        return
+
+    session["selected"] = {
+
+        "season": None,
+
+        "language": None,
+
+        "quality": None
+
+    }
+
+    session["current_files"] = list(session["all_files"])
+
+    touch_session(key)
+
+def get_selected_filters(key: str):
+
+    session = get_session(key)
+
+    if not session:
+        return None
+
+    return session["selected"]
+
+def apply_filters(key: str):
+
+    session = get_session(key)
+
+    if not session:
+        return []
+
+    season = session["selected"]["season"]
+    language = session["selected"]["language"]
+    quality = session["selected"]["quality"]
+
+    filtered = []
+
+    for file in session["all_files"]:
+
+        filename = getattr(file, "file_name", "") or ""
+
+        # Season
+        if season:
+
+            if extract_season(filename) != season:
+                continue
+
+        # Language
+        if language:
+
+            langs = extract_languages(filename)
+
+            if language not in langs:
+                continue
+
+        # Quality
+        if quality:
+
+            if extract_quality(filename) != quality:
+                continue
+
+        filtered.append(file)
+
+    session["current_files"] = filtered
+
+    touch_session(key)
+
+    return filtered
+
+def get_current_files(key: str):
+
+    session = get_session(key)
+
+    if not session:
+        return []
+
+    return session["current_files"]
+
+# -----------------------------
+# Callback Prefix
+# -----------------------------
+
+CALLBACK_PREFIX = "sf"
+
+@Client.on_callback_query(filters.regex(r"^sf:"))
+async def smart_filter_callback(client, query):
+
+    data = query.data.split(":")
+
+    action = data[1]
+
+    if action == "main":
+
+        await handle_main(client, query, data)
+
+    elif action in ("season", "language", "quality"):
+
+        await handle_menu(client, query, data)
+
+    elif action == "set":
+
+        await handle_apply(client, query, data)
+
+    elif action == "back":
+
+        await handle_back(client, query, data)
+
+
+async def handle_main(client, query, data):
+
+    key = data[2]
+
+    session = get_session(key)
+
+    if not session:
+
+        await query.answer(
+            "Session Expired.",
+            show_alert=True
+        )
+
+        return True
+
+    await query.message.edit_reply_markup(
+
+        InlineKeyboardMarkup(
+
+            build_main_filter_buttons()
+
+        )
+
+    )
+
+    await query.answer()
+
+    return True
+
+
+async def handle_menu(client, query, data):
+
+    filter_name = data[1]
+
+    key = data[2]
+
+    if not session_exists(key):
+
+        await query.answer(
+            "Session Expired.",
+            show_alert=True
+        )
+
+        return True
+
+    await query.message.edit_reply_markup(
+
+        build_filter_keyboard(
+            key,
+            filter_name
+        )
+
+    )
+
+    await query.answer()
+
+    return True
+
+
+async def handle_apply(client, query, data):
+    pass
+
+async def handle_set(client, query, data):
+
+    await query.answer(
+        "Coming Next Step..."
+    )
+
+    return True
+
+async def handle_back(client, query, data):
+    pass
+
+# -----------------------------
+# Callback Dispatcher
+# -----------------------------
+
+async def handle_callback(client, query):
+
+    if not query.data.startswith("sf:"):
+        return False
+
+    parts = query.data.split(":")
+
+    action = parts[1]
+
+    if action == "main":
+
+        return await handle_main(client, query, parts)
+
+    elif action in ("season", "language", "quality"):
+
+        return await handle_menu(client, query, parts)
+
+    elif action == "set":
+
+        return await handle_set(client, query, parts)
+
+    elif action == "none":
+
+        await query.answer(
+            "No filter available.",
+            show_alert=True
+        )
+        return True
+
+    return False
