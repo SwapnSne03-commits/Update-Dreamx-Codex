@@ -732,7 +732,6 @@ async def handle_set(client, query, data):
     # Build New Search Query
     search = build_search_query(key)
 
-    files = apply_filters(key)
     session = get_session(key)
 
     if session:
@@ -746,10 +745,10 @@ async def handle_set(client, query, data):
     # pmfilter.py will perform get_search_results(search)
 
     return {
-        "type": "filtered",
+        "search": search,
         "key": key,
-        "files": files,
     }
+
 def has_active_filters(key: str):
 
     session = get_session(key)
