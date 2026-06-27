@@ -549,6 +549,13 @@ async def next_page(bot, query):
         key=key,
         settings=settings,
     )
+    if session and session["current_query"] != session["query"]:
+        btn.append([
+            InlineKeyboardButton(
+                "⬅️ Back To Main",
+                callback_data=f"sf:main:{key}"
+            )
+        ])
     """
     if settings.get('button'):
         btn = [
