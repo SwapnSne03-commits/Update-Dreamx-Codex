@@ -198,6 +198,136 @@ async def save_file(media):
     #logger.info(f"[SUCCESS] '{file_name}' saved to {target_db} DB.")
     return True, 1
 
+def build_search_filter(query, file_type=None):
+
+    if isinstance(query, list):
+
+        raw_pattern = '|'.join(
+            re.escape(q.strip())
+            for q in query
+            if q.strip()
+        )
+
+        regex_list = [
+            re.compile(raw_pattern, re.IGNORECASE)
+        ] if raw_pattern else []
+
+        if USE_CAPTION_FILTER:
+
+            filter_mongo = {
+
+                "$or":
+
+                (
+                    [{"file_name": r} for r in regex_list]
+
+                    +
+
+                    [{"caption": r} for r in regex_list]
+
+                )
+
+            }
+
+        else:
+
+            filter_mongo = {
+
+                "$or":
+
+                [{"file_name": r} for r in regex_list]
+
+            }
+
+    else:
+
+        query = query.strip()
+
+        if not query:
+            return None
+
+        #
+        # Next Step
+        #
+
+        pass
+
+async def _find_media(
+    filter_mongo,
+    max_results=None,
+    offset=0
+):
+    """
+    Internal database finder.
+
+    Used by:
+        - get_search_results()
+        - get_all_search_results()
+    """
+
+    if max_results is None:
+
+        tasks = [
+            Media.find(filter_mongo)
+            .sort("$natural", -1)
+            .to_list(length=None)
+        ]
+
+        if MULTIPLE_DB:
+
+            tasks.append(
+
+                Media2.find(filter_mongo)
+                .sort("$natural", -1)
+                .to_list(length=None)
+
+            )
+
+        results = await asyncio.gather(*tasks)
+
+        files = results[0]
+
+        if MULTIPLE_DB and len(results) > 1:
+
+            files.extend(results[1])
+
+        return files
+
+    limit = max_results
+
+    tasks = [
+
+        Media.find(filter_mongo)
+        .sort("$natural", -1)
+        .skip(offset)
+        .limit(limit)
+        .to_list(length=limit)
+
+    ]
+
+    if MULTIPLE_DB:
+
+        tasks.append(
+
+            Media2.find(filter_mongo)
+            .sort("$natural", -1)
+            .skip(offset)
+            .limit(limit)
+            .to_list(length=limit)
+
+        )
+
+    results = await asyncio.gather(*tasks)
+
+    files = results[0]
+
+    if MULTIPLE_DB and len(results) > 1:
+
+        files.extend(results[1])
+
+    return files
+
+
 async def get_search_results(chat_id, query, file_type=None, max_results=None, offset=0, filter=False):
     if chat_id is not None:
         settings = await get_settings(int(chat_id))
@@ -350,6 +480,50 @@ async def get_search_results(chat_id, query, file_type=None, max_results=None, o
             next_offset = ""
 
     return files, next_offset, total_results
+
+async def get_all_search_results(
+    chat_id,
+    query,
+    file_type=None
+):
+    """
+    Return ALL matching files.
+
+    Used only by Smart Filter.
+    """
+
+    files = []
+
+    offset = 0
+
+    while True:
+
+        batch, next_offset, total = await get_search_results(
+            chat_id=chat_id,
+            query=query,
+            file_type=file_type,
+            max_results=100,
+            offset=offset
+        )
+
+        if not batch:
+            break
+
+        files.extend(batch)
+
+        if not next_offset:
+            break
+
+        offset = next_offset
+
+        # Safety Limit
+        if len(files) >= 500:
+
+            files = files[:500]
+
+            break
+
+    return files
 
 async def get_bad_files(query, file_type=None):
     query = query.strip()
