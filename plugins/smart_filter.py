@@ -414,30 +414,26 @@ FILTER_NAMES = {
 
 }
 
-def build_main_filter_buttons(key: str):
+def build_main_filter_buttons(key):
 
-    return InlineKeyboardMarkup([
-
+    return InlineKeyboardMarkup(
         [
-
-            InlineKeyboardButton(
-                text="📺 Season",
-                callback_data=f"sf:season:{key}"
-            ),
-
-            InlineKeyboardButton(
-                text="🌐 Language",
-                callback_data=f"sf:language:{key}"
-            ),
-
-            InlineKeyboardButton(
-                text="🎥 Quality",
-                callback_data=f"sf:quality:{key}"
-            )
-
+            [
+                InlineKeyboardButton(
+                    "📺 Season",
+                    callback_data=f"sf:season:{key}"
+                ),
+                InlineKeyboardButton(
+                    "🌐 Language",
+                    callback_data=f"sf:language:{key}"
+                ),
+                InlineKeyboardButton(
+                    "🎥 Quality",
+                    callback_data=f"sf:quality:{key}"
+                )
+            ]
         ]
-
-    ])
+    )
 
 def build_filter_keyboard(key: str, filter_name: str):
 
