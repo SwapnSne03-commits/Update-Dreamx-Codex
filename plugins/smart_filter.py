@@ -25,6 +25,7 @@ def create_session(key: str, query: str, files: list):
 
     FILTER_CACHE[key] = {
         "query": query,
+        "current_query": query,
         "all_files": list(files),
         "current_files": list(files),
 
@@ -723,6 +724,11 @@ async def handle_set(client, query, data):
 
     # Build New Search Query
     search = build_search_query(key)
+
+    session = get_session(key)
+
+    if session:
+        session["current_query"] = search
 
     await query.answer(
         f"Searching: {search}"
