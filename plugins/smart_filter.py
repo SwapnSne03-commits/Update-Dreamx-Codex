@@ -619,11 +619,7 @@ async def handle_main(client, query, data):
 
     await query.answer()
 
-    return {
-        "type": "main",
-        "key": key,
-    }
-
+    return True
 async def handle_menu(client, query, data):
 
     filter_name = data[1]
@@ -705,12 +701,7 @@ async def handle_set(client, query, data):
     # Next Step
     #
 
-    return {
-        "type": "filtered",
-        "key": key,
-        "files": files,
-    }
-
+    return True
 def has_active_filters(key: str):
 
     session = get_session(key)
