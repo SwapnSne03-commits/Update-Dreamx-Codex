@@ -414,30 +414,30 @@ FILTER_NAMES = {
 
 }
 
-def build_main_filter_buttons():
+def build_main_filter_buttons(key: str):
 
-    return [
+    return InlineKeyboardMarkup([
 
         [
 
             InlineKeyboardButton(
-                "📺 Season",
-                callback_data="sf:season"
+                text="📺 Season",
+                callback_data=f"sf:season:{key}"
             ),
 
             InlineKeyboardButton(
-                "🌐 Language",
-                callback_data="sf:language"
+                text="🌐 Language",
+                callback_data=f"sf:language:{key}"
             ),
 
             InlineKeyboardButton(
-                "🎥 Quality",
-                callback_data="sf:quality"
+                text="🎥 Quality",
+                callback_data=f"sf:quality:{key}"
             )
 
         ]
 
-    ]
+    ])
 
 def build_filter_keyboard(key: str, filter_name: str):
 
@@ -604,30 +604,6 @@ def get_current_files(key: str):
 
 CALLBACK_PREFIX = "sf"
 
-@Client.on_callback_query(filters.regex(r"^sf:"))
-async def smart_filter_callback(client, query):
-
-    data = query.data.split(":")
-
-    action = data[1]
-
-    if action == "main":
-
-        await handle_main(client, query, data)
-
-    elif action in ("season", "language", "quality"):
-
-        await handle_menu(client, query, data)
-
-    elif action == "set":
-
-        await handle_apply(client, query, data)
-
-    elif action == "back":
-
-        await handle_back(client, query, data)
-
-
 async def handle_main(client, query, data):
 
     key = data[2]
@@ -644,19 +620,12 @@ async def handle_main(client, query, data):
         return True
 
     await query.message.edit_reply_markup(
-
-        InlineKeyboardMarkup(
-
-            build_main_filter_buttons()
-
-        )
-
+        reply_markup=build_main_filter_buttons(key)
     )
 
     await query.answer()
 
     return True
-
 
 async def handle_menu(client, query, data):
 
@@ -685,10 +654,6 @@ async def handle_menu(client, query, data):
     await query.answer()
 
     return True
-
-
-async def handle_apply(client, query, data):
-    pass
 
 async def handle_set(client, query, data):
 
