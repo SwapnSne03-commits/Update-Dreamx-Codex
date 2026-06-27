@@ -19,6 +19,7 @@ from plugins.smart_filter import (
     build_available_filters,
     build_main_filter_buttons,
     handle_callback,
+    get_session,
 )
 import asyncio
 import re
@@ -525,6 +526,10 @@ async def next_page(bot, query):
         search = BUTTONS.get(key)
     else:
         search = FRESH.get(key)
+    session = get_session(key)
+
+    if session:
+        search = session.get("current_query", search)
     if not search:
         await query.answer(script.OLD_ALRT_TXT.format(query.from_user.first_name), show_alert=True)
         return
@@ -1241,6 +1246,40 @@ async def cb_handler(client: Client, query: CallbackQuery):
             key=key,
             settings=settings,
         )
+        req = query.from_user.id
+
+        if ULTRA_FAST_MODE:
+            page_text = "1"
+        else:
+            try:
+                if settings["max_btn"]:
+                    page_text = f"1/{math.ceil(total_results / 10)}"
+                else:
+                    page_text = f"1/{math.ceil(total_results / int(MAX_B_TN))}"
+            except KeyError:
+                page_text = f"1/{math.ceil(total_results / 10)}"
+        if offset != "":
+            btn.append([
+                InlineKeyboardButton(
+                    "ᴘᴀɢᴇ",
+                    callback_data="pages"
+                ),
+                InlineKeyboardButton(
+                    page_text,
+                    callback_data="pages"
+                ),
+                InlineKeyboardButton(
+                    "ɴᴇxᴛ ⋟",
+                    callback_data=f"next_{req}_{key}_{offset}"
+                )
+            ])
+        else:
+            btn.append([
+                InlineKeyboardButton(
+                    "↭ ɴᴏ ᴍᴏʀᴇ ᴘᴀɢᴇꜱ ᴀᴠᴀɪʟᴀʙʟᴇ ↭",
+                    callback_data="pages"
+                )
+            ])
         try:
             await query.edit_message_reply_markup(
                 reply_markup=InlineKeyboardMarkup(btn)
