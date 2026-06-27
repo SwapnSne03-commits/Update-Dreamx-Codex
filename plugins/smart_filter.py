@@ -657,11 +657,112 @@ async def handle_menu(client, query, data):
 
 async def handle_set(client, query, data):
 
-    await query.answer(
-        "Coming Next Step..."
+    filter_name = data[2]
+
+    try:
+        index = int(data[3])
+    except:
+        await query.answer("Invalid Filter")
+        return True
+
+    key = data[4]
+
+    if not session_exists(key):
+
+        await query.answer(
+            "Session Expired.",
+            show_alert=True
+        )
+        return True
+
+    value = get_filter_value(
+        key,
+        filter_name,
+        index
     )
 
+    if value is None:
+
+        await query.answer(
+            "Invalid Filter",
+            show_alert=True
+        )
+        return True
+
+    # Save Selected Filter
+    set_filter(
+        key,
+        filter_name,
+        value
+    )
+
+    # Apply Filter
+    files = apply_filters(key)
+
+    await query.answer(
+        f"{filter_name.title()} : {value}"
+    )
+
+    #
+    # Result Rendering
+    # Next Step
+    #
+
     return True
+
+def has_active_filters(key: str):
+
+    session = get_session(key)
+
+    if not session:
+        return False
+
+    return any(session["selected"].values())
+
+def active_filter_count(key: str):
+
+    session = get_session(key)
+
+    if not session:
+        return 0
+
+    return sum(
+        value is not None
+        for value in session["selected"].values()
+    )
+
+def get_active_filters(key: str):
+
+    session = get_session(key)
+
+    if not session:
+        return {}
+
+    return {
+
+        k: v
+
+        for k, v in session["selected"].items()
+
+        if v is not None
+
+    }
+
+def reset_current_files(key: str):
+
+    session = get_session(key)
+
+    if not session:
+        return []
+
+    session["current_files"] = list(
+        session["all_files"]
+    )
+
+    touch_session(key)
+
+    return session["current_files"]
+
 
 async def handle_back(client, query, data):
     pass
