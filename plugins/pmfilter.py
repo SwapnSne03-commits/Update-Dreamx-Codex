@@ -448,10 +448,7 @@ def add_smart_filter_buttons(btn, key):
 def build_result_keyboard(
     files,
     key,
-    settings,
-    offset,
-    total_results,
-    req,
+    settings
 ):
     """
     Common keyboard builder.
@@ -475,6 +472,18 @@ def build_result_keyboard(
         btn = []
     btn = add_smart_filter_buttons(btn, key)
     return btn
+
+async def render_filtered_results(
+    query,
+    files,
+    key,
+):
+    """
+    Render Smart Filter result.
+
+    Next step.
+    """
+    pass
 
 @Client.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
@@ -504,6 +513,12 @@ async def next_page(bot, query):
     temp.GETALL[key] = files
     temp.SHORT[query.from_user.id] = query.message.chat.id
     settings = await get_settings(query.message.chat.id)
+    btn = build_result_keyboard(
+        files=files,
+        key=key,
+        settings=settings,
+    )
+    """
     if settings.get('button'):
         btn = [
             [
@@ -535,6 +550,7 @@ async def next_page(bot, query):
                            #"Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
                   # ]
                    #)
+                   """
         
     if ULTRA_FAST_MODE:
         if 0 < offset <= 10:
@@ -2255,9 +2271,6 @@ async def auto_filter(client, msg, spoll=False):
             files=files,
             key=key,
             settings=settings,
-            offset=offset,
-            total_results=total_results,
-            req=message.from_user.id if message.from_user else 0,
         )
 
         if offset != "":
