@@ -2219,6 +2219,7 @@ async def auto_filter(client, msg, spoll=False):
         build_available_filters(key)
 
         # ---------------------------------------------- #
+        """
         if settings.get('button'):
             btn = [
                 [
@@ -2249,6 +2250,15 @@ async def auto_filter(client, msg, spoll=False):
                              #  "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
                       # ]
                       # )
+                      """
+        btn = build_result_keyboard(
+            files=files,
+            key=key,
+            settings=settings,
+            offset=offset,
+            total_results=total_results,
+            req=message.from_user.id if message.from_user else 0,
+        )
 
         if offset != "":
             req = message.from_user.id if message.from_user else 0
@@ -2279,7 +2289,6 @@ async def auto_filter(client, msg, spoll=False):
             btn.append([InlineKeyboardButton(
                 text="↭ ɴᴏ ᴍᴏʀᴇ ᴘᴀɢᴇꜱ ᴀᴠᴀɪʟᴀʙʟᴇ ↭", callback_data="pages")])
 
-        btn = add_smart_filter_buttons(btn, key)
         if settings.get('imdb') and files:
 
             try:
