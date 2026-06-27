@@ -1204,6 +1204,17 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Next Step
 
+        settings = await get_settings(query.message.chat.id)
+
+        files, offset, total_results = await get_search_results(
+            chat_id=query.message.chat.id,
+            query=search,
+        )
+
+        await query.answer(
+            f"Query: {search}\nFiles: {len(files)}",
+            show_alert=True
+        )
         return
         
     if handled:
