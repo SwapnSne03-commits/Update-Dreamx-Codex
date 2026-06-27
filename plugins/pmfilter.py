@@ -485,6 +485,32 @@ async def render_filtered_results(
     """
     pass
 
+async def update_search_result(
+    query,
+    search,
+    files,
+    offset,
+    total_results,
+    settings,
+    req,
+):
+    """
+    Reuse renderer for:
+
+    - next_page()
+    - smart filter
+    """
+
+    btn = build_result_keyboard(
+        files=files,
+        key=f"{query.message.chat.id}-{query.message.id}",
+        settings=settings,
+    )
+
+    # Pagination will be added here
+
+    return btn
+
 @Client.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
@@ -1198,11 +1224,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
     DreamxData = query.data
     handled = await handle_callback(client, query)
 
-    if isinstance(handled, str):
+    if isinstance(handled, dict):
 
-        search = handled
-
-        # Next Step
+        search = handled["search"]
+        key = handled["key"]
 
         settings = await get_settings(query.message.chat.id)
 
@@ -1211,6 +1236,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
             query=search,
         )
 
+        btn = build_result_keyboard(
+           files=files,
+            key=key,
+            settings=settings,
+        )
         await query.answer(
             f"Query: {search}\nFiles: {len(files)}",
             show_alert=True
