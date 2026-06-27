@@ -646,14 +646,14 @@ async def handle_main(client, query, data):
         return True
 
     session["current_query"] = session["query"]
-    
-    await query.message.edit_reply_markup(
-        reply_markup=build_main_filter_buttons(key)
-    )
-
     await query.answer()
 
-    return True
+    return {
+        "type": "main",
+        "search": session["query"],
+        "key": key,
+    }
+
 async def handle_menu(client, query, data):
 
     filter_name = data[1]
