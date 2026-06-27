@@ -593,20 +593,24 @@ def build_search_query(key: str):
     if not session:
         return None
 
-    query = session["query"]
+    query = session["query"].strip()
 
     selected = session["selected"]
 
     parts = [query]
 
-    if selected["season"]:
-        parts.append(selected["season"])
+    for filter_name in ("season", "language", "quality"):
 
-    if selected["language"]:
-        parts.append(selected["language"])
+        value = selected.get(filter_name)
 
-    if selected["quality"]:
-        parts.append(selected["quality"])
+        if not value:
+            continue
+
+        value = value.strip()
+
+        # Avoid duplicate words
+        if value.lower() not in query.lower():
+            parts.append(value)
 
     return " ".join(parts)
 
