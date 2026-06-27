@@ -4,7 +4,7 @@ from fuzzywuzzy import process
 from dreamxbotz.util.file_properties import get_name, get_hash
 from urllib.parse import quote_plus
 import logging
-from database.ia_filterdb import Media, Media2, get_file_details, get_search_results, get_bad_files
+from database.ia_filterdb import Media, Media2, get_file_details, get_search_results, get_bad_files, get_all_search_results
 from database.config_db import mdb
 from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid, ChatAdminRequired, UserNotParticipant
 from pyrogram import Client, filters, enums
@@ -2162,12 +2162,16 @@ async def auto_filter(client, msg, spoll=False):
         FRESH[key] = search
         temp.GETALL[key] = files
         temp.SHORT[message.from_user.id] = message.chat.id
+        all_files = await get_all_search_results(
+            chat_id=message.chat.id,
+            query=search
+        )
         # ---------------- Smart Filter ---------------- #
 
         create_session(
             key=key,
             query=search,
-            files=files
+            files=all_files
         )
 
         build_available_filters(key)
