@@ -455,17 +455,25 @@ def build_result_keyboard(
 ):
     """
     Common keyboard builder.
-
-    Used by:
-
-    - auto_filter()
-    - next_page()
-    - smart_filter
-    - back_to_main
     """
 
-    btn = []
+    if settings.get("button"):
 
+        btn = [
+            [
+                InlineKeyboardButton(
+                    text=f"🔗 {get_size(file.file_size)} ≽ " +
+                    clean_filename(file.file_name),
+                    callback_data=f"file#{file.file_id}"
+                )
+            ]
+            for file in files
+        ]
+
+    else:
+
+        btn = []
+    btn = add_smart_filter_buttons(btn, key)
     return btn
 
 @Client.on_callback_query(filters.regex(r"^next"))
@@ -2268,8 +2276,6 @@ async def auto_filter(client, msg, spoll=False):
         else:
             btn.append([InlineKeyboardButton(
                 text="↭ ɴᴏ ᴍᴏʀᴇ ᴘᴀɢᴇꜱ ᴀᴠᴀɪʟᴀʙʟᴇ ↭", callback_data="pages")])
-
-        btn = add_smart_filter_buttons(btn, key)
 
         if settings.get('imdb') and files:
 
