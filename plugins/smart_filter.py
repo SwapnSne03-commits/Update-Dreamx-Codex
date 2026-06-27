@@ -646,6 +646,11 @@ async def handle_main(client, query, data):
         return True
 
     session["current_query"] = session["query"]
+    session["selected"] = {
+        "season": None,
+        "language": None,
+        "quality": None,
+    }
     await query.answer()
 
     return {
