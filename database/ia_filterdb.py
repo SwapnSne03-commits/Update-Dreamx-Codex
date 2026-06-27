@@ -407,14 +407,14 @@ async def get_search_results(chat_id, query, file_type=None, max_results=None, o
                         r"(\b|[\.\+\-_])" + re.escape(part) + r"\w*(\b|[\.\+\-_])"
                     )
 
-            #raw_pattern = r".*[\s\.\+\-_()\[\]]".join(new_parts)
-            #raw_pattern = r"\b" + raw_pattern + r"\b"
-            lookaheads = []
+            raw_pattern = r".*[\s\.\+\-_()\[\]]".join(new_parts)
+            raw_pattern = r"\b" + raw_pattern + r"\b"
+            #lookaheads = []
 
-            for part in new_parts:
-                lookaheads.append(f"(?=.*{part})")
+            #for part in new_parts:
+                #lookaheads.append(f"(?=.*{part})")
 
-            raw_pattern = "".join(lookaheads) + ".*"
+            #raw_pattern = "".join(lookaheads) + ".*"
         else:
             # For single-word queries, use word boundaries for accuracy.
             query_lower = query.lower()
