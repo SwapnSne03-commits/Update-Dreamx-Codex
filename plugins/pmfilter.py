@@ -1198,6 +1198,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
     DreamxData = query.data
     handled = await handle_callback(client, query)
 
+    if isinstance(handled, str):
+
+        search = handled
+
+        # Next Step
+
+        return
+        
     if handled:
         return
     try:
