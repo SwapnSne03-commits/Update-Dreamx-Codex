@@ -2217,7 +2217,6 @@ async def auto_filter(client, msg, spoll=False):
                       # ]
                       # )
 
-        btn = add_smart_filter_buttons(btn, key)
         if offset != "":
             req = message.from_user.id if message.from_user else 0
             if ULTRA_FAST_MODE:
