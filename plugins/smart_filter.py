@@ -583,6 +583,33 @@ def apply_filters(key: str):
 
     return filtered
 
+def build_search_query(key: str):
+    """
+    Build search query from selected filters.
+    """
+
+    session = get_session(key)
+
+    if not session:
+        return None
+
+    query = session["query"]
+
+    selected = session["selected"]
+
+    parts = [query]
+
+    if selected["season"]:
+        parts.append(selected["season"])
+
+    if selected["language"]:
+        parts.append(selected["language"])
+
+    if selected["quality"]:
+        parts.append(selected["quality"])
+
+    return " ".join(parts)
+
 def get_current_files(key: str):
 
     session = get_session(key)
@@ -682,6 +709,7 @@ async def handle_set(client, query, data):
         )
         return True
 
+    # Apply Filter
     # Save Selected Filter
     set_filter(
         key,
@@ -689,19 +717,17 @@ async def handle_set(client, query, data):
         value
     )
 
-    # Apply Filter
-    files = apply_filters(key)
+    # Build New Search Query
+    search = build_search_query(key)
 
     await query.answer(
-        f"{filter_name.title()} : {value}"
+        f"Searching: {search}"
     )
 
-    #
-    # Result Rendering
-    # Next Step
-    #
+    # Next Step:
+    # pmfilter.py will perform get_search_results(search)
 
-    return True
+    return search
 def has_active_filters(key: str):
 
     session = get_session(key)
