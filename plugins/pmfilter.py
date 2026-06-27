@@ -2162,6 +2162,17 @@ async def auto_filter(client, msg, spoll=False):
         FRESH[key] = search
         temp.GETALL[key] = files
         temp.SHORT[message.from_user.id] = message.chat.id
+        # ---------------- Smart Filter ---------------- #
+
+        create_session(
+            key=key,
+            query=search,
+            files=files
+        )
+
+        build_available_filters(key)
+
+        # ---------------------------------------------- #
         if settings.get('button'):
             btn = [
                 [
@@ -2192,7 +2203,7 @@ async def auto_filter(client, msg, spoll=False):
                              #  "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
                       # ]
                       # )
-            
+        
         if offset != "":
             req = message.from_user.id if message.from_user else 0
             if ULTRA_FAST_MODE:
