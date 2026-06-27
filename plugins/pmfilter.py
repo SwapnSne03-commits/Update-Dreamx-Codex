@@ -52,8 +52,8 @@ IGNORE_WORDS = [
     "hollywood", "all", "bollywood", "south", "hd", "karo", "upload", "bhejo",
     "fullepisode", "combined", "combine", "merge", "combin", "bengali", "please", "plz", "hindi", "seasons", "request", "#request", "send", "link", "dabbbed", "dubbed",
 ]
-QUALITY_WORDS = {"360p", "480p", "144p","720p", "1080p", "1440p", "2160p", "4k"}
-
+#QUALITY_WORDS = {"360p", "480p", "144p","720p", "1080p", "1440p", "2160p", "4k"}
+QUALITY_WORDS = {"114p", "223p"}
 async def delete_after_time(message):
     await asyncio.sleep(DELETE_TIME)
     try:
