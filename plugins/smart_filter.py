@@ -222,18 +222,22 @@ LANGUAGE_PATTERNS = {
 
     "Hindi": [
         r"\bhindi\b",
-        r"\bhin\b"
+        r"\bhin\b",
+        r"\bhind\b"
     ],
 
     "English": [
         r"\benglish\b",
-        r"\beng\b"
+        r"\beng\b",
+        r"\bengl\b",
+        r"\bengli\b"
     ],
 
     "Bengali": [
         r"\bbengali\b",
         r"\bbangla\b",
-        r"\bbeng\b"
+        r"\bbeng\b",
+        r"\bbang\b"
     ],
 
     "Tamil": [
@@ -248,7 +252,9 @@ LANGUAGE_PATTERNS = {
 
     "Malayalam": [
         r"\bmalayalam\b",
-        r"\bmal\b"
+        r"\bmal\b",
+        r"\bmalayali\b",
+        r"\bmalaya\b"
     ],
 
     "Kannada": [
@@ -257,11 +263,13 @@ LANGUAGE_PATTERNS = {
     ],
 
     "Marathi": [
-        r"\bmarathi\b"
+        r"\bmarathi\b",
+        r"\bmar\b"
     ],
 
     "Punjabi": [
-        r"\bpunjabi\b"
+        r"\bpunjabi\b",
+        r"\bpun\b"
     ],
 
     "Gujarati": [
@@ -273,15 +281,18 @@ LANGUAGE_PATTERNS = {
     ],
 
     "Korean": [
-        r"\bkorean\b"
+        r"\bkorean\b",
+        r"\bkor\b"
     ],
 
     "Japanese": [
-        r"\bjapanese\b"
+        r"\bjapanese\b",
+        r"\bjap\b"
     ],
 
     "Chinese": [
-        r"\bchinese\b"
+        r"\bchinese\b",
+        r"\bchi\b",
     ],
 
     "French": [
@@ -321,6 +332,9 @@ LANGUAGE_SEARCH = {
     "malayalam": "mal",
     "chinese": "chin",
     "kannada": "kan",
+    "dual audio": "dual",
+    "multi audio": "multi",
+}
 }
 
 SPECIAL_LANGUAGE_PATTERNS = {
