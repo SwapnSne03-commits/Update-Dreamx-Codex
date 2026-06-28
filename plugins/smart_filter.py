@@ -475,42 +475,49 @@ def build_filter_keyboard(key: str, filter_name: str):
 
     values = session["available"].get(filter_name, [])
 
-    # No options found
-    if not values:
-        rows.append([
-            InlineKeyboardButton(
-                "❌ No Options Found",
-                callback_data="sf:none"
-            )
-        ])
+    TITLE_TEXT = {
+        "season": "⤋ ᴄʜᴏᴏsᴇ sᴇᴀsᴏɴ ⤋",
+        "language": "⤋ ᴄʜᴏᴏsᴇ ʟᴀɴɢᴜᴀɢᴇ ⤋",
+        "quality": "⤋ ᴄʜᴏᴏsᴇ ǫᴜᴀʟɪᴛʏ ⤋",
+    }
 
-    else:
+    rows.append([
+        InlineKeyboardButton(
+            text=TITLE_TEXT.get(filter_name, "Choose Filter"),
+            callback_data="sf:header"
+        )
+    ])
 
-        for i in range(0, len(values), 2):
+    for i in range(0, len(values), 2):
 
-            row = []
+        row = []
 
-            for j in (0, 1):
+        for j in (0, 1):
 
-                if i + j >= len(values):
-                    break
+            if i + j >= len(values):
+                break
 
-                value = values[i + j]
+            value = values[i + j]
 
-                text = DISPLAY_NAMES.get(value, value)
-                row.append(
-                    InlineKeyboardButton(
-                        text=text,
-                        callback_data=f"sf:set:{filter_name}:{i+j}:{key}"
-                    )
+            text = DISPLAY_NAMES.get(value, value)
+
+            selected = session["selected"].get(filter_name)
+
+            if selected == value:
+                text = f"✅ {text}"
+            row.append(
+                InlineKeyboardButton(
+                    text=text,
+                    callback_data=f"sf:set:{filter_name}:{i+j}:{key}"
                 )
+            )
 
-            rows.append(row)
+        rows.append(row)
 
     # Back button
     rows.append([
         InlineKeyboardButton(
-            "⬅️ Back To Main",
+            "⤝ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
             callback_data=f"sf:main:{key}"
         )
     ])
@@ -711,10 +718,23 @@ async def handle_menu(client, query, data):
 
     key = data[2]
 
-    if not session_exists(key):
+    session = get_session(key)
+
+    if not session:
 
         await query.answer(
-            "Session Expired.",
+            "sᴀssɪᴏɴ ᴇxᴘɪʀᴇᴅ, sᴇᴀʀᴄʜ ᴀɢᴀɪɴ",
+            show_alert=True
+        )
+
+        return True
+
+    values = session["available"].get(filter_name, [])
+
+    if not values:
+
+        await query.answer(
+            f"{filter_name.title()} ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ ғᴏʀ ᴛʜɪs ʀᴇsᴜʟᴛ.",
             show_alert=True
         )
 
@@ -876,6 +896,10 @@ async def handle_callback(client, query):
     elif action == "set":
 
         return await handle_set(client, query, parts)
+
+    elif action == "header":
+        await query.answer()
+        return True
 
     elif action == "none":
 
