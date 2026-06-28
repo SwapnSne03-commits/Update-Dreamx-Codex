@@ -335,7 +335,6 @@ LANGUAGE_SEARCH = {
     "dual audio": "dual",
     "multi audio": "multi",
 }
-}
 
 SPECIAL_LANGUAGE_PATTERNS = {
 
