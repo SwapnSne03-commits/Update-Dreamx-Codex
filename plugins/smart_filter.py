@@ -505,6 +505,9 @@ def set_filter(key: str, filter_name: str, value):
     if not session:
         return
 
+    for name in session["selected"]:
+        session["selected"][name] = None
+
     session["selected"][filter_name] = value
 
     touch_session(key)
@@ -586,7 +589,8 @@ def apply_filters(key: str):
 
 def build_search_query(key: str):
     """
-    Build search query from selected filters.
+    Build search query using the main query
+    and only one active filter.
     """
 
     session = get_session(key)
@@ -596,22 +600,20 @@ def build_search_query(key: str):
 
     query = session["query"].strip()
 
-    selected = session["selected"]
-
     parts = [query]
 
-    for filter_name in ("season", "language", "quality"):
-
-        value = selected.get(filter_name)
+    for value in session["selected"].values():
 
         if not value:
             continue
 
         value = value.strip()
 
-        # Avoid duplicate words
+        # Prevent duplicate words
         if value.lower() not in query.lower():
             parts.append(value)
+
+        break
 
     return " ".join(parts)
 
