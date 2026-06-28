@@ -18,7 +18,7 @@ FILTER_CACHE = {}
 CACHE_EXPIRE = 1800      # 30 Minutes
 _CLEANER_STARTED = False
 
-def create_session(key: str, query: str, files: list):
+def create_session(key: str, query: str, files: list, user_id: int):
     """
     Create a new smart filter session.
     """
@@ -29,6 +29,8 @@ def create_session(key: str, query: str, files: list):
         "all_files": list(files),
         "current_files": list(files),
 
+        "user_id": user_id,
+        
         "selected": {
             "season": None,
             "language": None,
@@ -883,6 +885,22 @@ async def handle_callback(client, query):
 
     parts = query.data.split(":")
 
+    key = parts[-1]
+
+    session = get_session(key)
+
+    if session:
+
+        owner = session.get("user_id")
+
+        if owner and owner != query.from_user.id:
+
+            await query.answer(
+                "🚫 ɴᴏᴛ ʏᴏᴜʀ ʀᴇǫᴜᴇsᴛ. ᴅᴏ ʏᴏᴜʀs !!",
+                show_alert=True
+            )
+
+            return True
     action = parts[1]
 
     if action == "main":
