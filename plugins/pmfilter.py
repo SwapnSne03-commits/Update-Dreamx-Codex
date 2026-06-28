@@ -474,44 +474,6 @@ def build_result_keyboard(
     btn = add_smart_filter_buttons(btn, key)
     return btn
 
-async def render_filtered_results(
-    query,
-    files,
-    key,
-):
-    """
-    Render Smart Filter result.
-
-    Next step.
-    """
-    pass
-
-async def update_search_result(
-    query,
-    search,
-    files,
-    offset,
-    total_results,
-    settings,
-    req,
-):
-    """
-    Reuse renderer for:
-
-    - next_page()
-    - smart filter
-    """
-
-    btn = build_result_keyboard(
-        files=files,
-        key=f"{query.message.chat.id}-{query.message.id}",
-        settings=settings,
-    )
-
-    # Pagination will be added here
-
-    return btn
-
 @Client.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
@@ -552,43 +514,10 @@ async def next_page(bot, query):
     if session and session["current_query"] != session["query"]:
         btn.append([
             InlineKeyboardButton(
-                "⬅️ Back To Main",
+                "⤝ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
                 callback_data=f"sf:main:{key}"
             )
         ])
-    """
-    if settings.get('button'):
-        btn = [
-            [
-                InlineKeyboardButton(text=f"🔗 {get_size(file.file_size)} ≽ " + clean_filename(
-                    file.file_name), callback_data=f'file#{file.file_id}'),
-            ]
-            for file in files
-        ]
-       # btn.insert(0,
-                 #  [
-                     #  InlineKeyboardButton(
-                        #   f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
-                    #   InlineKeyboardButton(
-                          # "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
-                      # InlineKeyboardButton(
-                          # "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
-                  # ]
-                   #)
-
-    else:
-        btn = []
-        #btn.insert(0,
-                 #  [
-                       #InlineKeyboardButton(
-                         #  f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
-                       #InlineKeyboardButton(
-                          # "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
-                       #InlineKeyboardButton(
-                           #"Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
-                  # ]
-                   #)
-                   """
         
     if ULTRA_FAST_MODE:
         if 0 < offset <= 10:
@@ -2344,44 +2273,14 @@ async def auto_filter(client, msg, spoll=False):
         create_session(
             key=key,
             query=search,
-            files=all_files
+            files=all_files,
+            message.from_user.id
         )
 
         build_available_filters(key)
 
         # ---------------------------------------------- #
-        """
-        if settings.get('button'):
-            btn = [
-                [
-                    InlineKeyboardButton(text=f"🔗 {get_size(file.file_size)} ≽ " + clean_filename(
-                        file.file_name), callback_data=f'file#{file.file_id}'),
-                ]
-                for file in files
-            ]
-           # btn.insert(0,
-                   #    [
-                         #  InlineKeyboardButton(
-                       #        f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
-                        #   InlineKeyboardButton(
-                   #            "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
-                          # InlineKeyboardButton(
-                     #          "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
-                      # ]
-                     #  )    
-        else:
-            btn = []
-            #btn.insert(0,
-                      # [
-                          # InlineKeyboardButton(
-                            #   f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
-                         #  InlineKeyboardButton(
-                           #    "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
-                         #  InlineKeyboardButton(
-                             #  "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
-                      # ]
-                      # )
-                      """
+        
         btn = build_result_keyboard(
             files=files,
             key=key,
