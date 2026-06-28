@@ -806,7 +806,7 @@ async def handle_set(client, query, data):
         session["current_query"] = search
 
     await query.answer(
-        f"Searching: {search}"
+        f"ғɪʟᴛᴇʀɪɴɢ..."
     )
 
     # Next Step:
