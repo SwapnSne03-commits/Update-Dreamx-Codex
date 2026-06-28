@@ -230,7 +230,8 @@ LANGUAGE_PATTERNS = {
 
     "Bengali": [
         r"\bbengali\b",
-        r"\bbangla\b"
+        r"\bbangla\b",
+        r"\bbeng\b"
     ],
 
     "Tamil": [
@@ -290,6 +291,35 @@ LANGUAGE_PATTERNS = {
     ]
 }
 
+DISPLAY_NAMES = {
+    "Hindi": "ʜɪɴᴅɪ",
+    "English": "ᴇɴɢʟɪsʜ",
+    "Tamil": "ᴛᴀᴍɪʟ",
+    "Telugu": "ᴛᴇʟᴜɢᴜ",
+    "Malayalam": "ᴍᴀʟᴀʏᴀʟᴀᴍ",
+    "Bengali": "ʙᴇɴɢᴀʟɪ",
+    "Korean": "ᴋᴏʀᴇᴀɴ",
+    "Japanese": "ᴊᴀᴘᴀɴᴇsᴇ",
+    "Chinese": "ᴄʜɪɴᴇsᴇ",
+    "Marathi": "ᴍᴀʀᴀᴛʜɪ",
+    "Punjabi": "ᴘᴜɴᴊᴀʙɪ",
+    "Kannada": "ᴋᴀɴɴᴀᴅᴀ",
+    "Dual Audio": "ᴅᴜᴀʟ ᴀᴜᴅɪᴏ",
+    "Multi Audio": "ᴍᴜʟᴛɪ ᴀᴜᴅɪᴏ",
+}
+
+LANGUAGE_SEARCH = {
+    "hindi": "hin",
+    "english": "eng",
+    "bengali": "ben",
+    "tamil": "tam",
+    "telugu": "tel",
+    "korean": "kor",
+    "japanese": "jap", 
+    "malayalam": "mal",
+    "chinese": "chin",
+    "kannada": "kan",
+}
 
 SPECIAL_LANGUAGE_PATTERNS = {
 
@@ -456,14 +486,26 @@ def build_filter_keyboard(key: str, filter_name: str):
 
     else:
 
-        for index, value in enumerate(values):
+        for i in range(0, len(values), 2):
 
-            rows.append([
-                InlineKeyboardButton(
-                    text=value,
-                    callback_data=f"sf:set:{filter_name}:{index}:{key}"
+            row = []
+
+            for j in (0, 1):
+
+                if i + j >= len(values):
+                    break
+
+                value = values[i + j]
+
+                text = DISPLAY_NAMES.get(value, value)
+                row.append(
+                    InlineKeyboardButton(
+                        text=text,
+                        callback_data=f"sf:set:{filter_name}:{i+j}:{key}"
+                    )
                 )
-            ])
+
+            rows.append(row)
 
     # Back button
     rows.append([
@@ -609,6 +651,8 @@ def build_search_query(key: str):
 
         value = value.strip()
 
+        if value.lower() in LANGUAGE_SEARCH:
+            value = LANGUAGE_SEARCH[value.lower()]
         # Prevent duplicate words
         if value.lower() not in query.lower():
             parts.append(value)
