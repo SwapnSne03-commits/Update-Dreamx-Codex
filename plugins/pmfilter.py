@@ -689,7 +689,13 @@ async def next_page(bot, query):
                     ],
                 )
 
-    btn = add_smart_filter_buttons(btn, key)
+    if session and session["current_query"] != session["query"]:
+        btn.append([
+            InlineKeyboardButton(
+                "⋞ ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
+                callback_data=f"sf:main:{key}"
+            )
+        ])
     if not settings["button"]:
         cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
         time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - \
@@ -1293,7 +1299,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         if action_type != "main":
             btn.append([
                 InlineKeyboardButton(
-                    "⬅️ Back To Main",
+                    "⋞ ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
                     callback_data=f"sf:main:{key}"
                 )
             ])
