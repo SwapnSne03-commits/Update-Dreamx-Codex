@@ -2274,7 +2274,7 @@ async def auto_filter(client, msg, spoll=False):
             key=key,
             query=search,
             files=all_files,
-            message.from_user.id
+            user_id=message.from_user.id
         )
 
         build_available_filters(key)
