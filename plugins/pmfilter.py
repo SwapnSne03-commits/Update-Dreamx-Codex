@@ -511,13 +511,6 @@ async def next_page(bot, query):
         key=key,
         settings=settings,
     )
-    if session and session["current_query"] != session["query"]:
-        btn.append([
-            InlineKeyboardButton(
-                "⤝ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
-                callback_data=f"sf:main:{key}"
-            )
-        ])
         
     if ULTRA_FAST_MODE:
         if 0 < offset <= 10:
@@ -621,7 +614,7 @@ async def next_page(bot, query):
     if session and session["current_query"] != session["query"]:
         btn.append([
             InlineKeyboardButton(
-                "⋞ ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
+                "⤝ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
                 callback_data=f"sf:main:{key}"
             )
         ])
@@ -1228,7 +1221,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         if action_type != "main":
             btn.append([
                 InlineKeyboardButton(
-                    "⋞ ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
+                    "⤝ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
                     callback_data=f"sf:main:{key}"
                 )
             ])
