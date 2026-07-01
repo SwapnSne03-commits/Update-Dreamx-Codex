@@ -1261,7 +1261,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         query,
                         total_results,
                         dreamx_title,
-                        offset
+                        0
                     )
 
                     if query.message.caption:
@@ -1298,7 +1298,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         query,
                         total_results,
                         dreamx_title,
-                        offset + 1
+                        0
                     )
 
                     await query.message.edit_text(
