@@ -1166,6 +1166,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
     if isinstance(handled, dict):
 
+        curr_time = datetime.now(pytz.timezone("Asia/Kolkata")).time()
         action_type = handled.get("type")
 
         search = handled.get("search")
@@ -1225,12 +1226,102 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     callback_data=f"sf:main:{key}"
                 )
             ])
-        try:
-            await query.edit_message_reply_markup(
-                reply_markup=InlineKeyboardMarkup(btn)
+        
+        if not settings["button"]:
+
+            cur_time = datetime.now(pytz.timezone("Asia/Kolkata")).time()
+
+            time_difference = (
+                timedelta(
+                    hours=cur_time.hour,
+                    minutes=cur_time.minute,
+                    seconds=(cur_time.second + (cur_time.microsecond / 1000000))
+                )
+                - timedelta(
+                    hours=curr_time.hour,
+                    minutes=curr_time.minute,
+                    seconds=(curr_time.second + (curr_time.microsecond / 1000000))
+                )
             )
-        except MessageNotModified:
-            pass
+
+            remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
+
+            dreamx_title = clean_search_text(search)
+
+            cap = None
+
+            try:
+
+                if settings["imdb"]:
+
+                    cap = await get_cap(
+                        settings,
+                        remaining_seconds,
+                        files,
+                        query,
+                        total_results,
+                        dreamx_title,
+                        offset
+                    )
+
+                    if query.message.caption:
+
+                        try:
+                            await query.message.edit_caption(
+                                caption=cap,
+                                reply_markup=InlineKeyboardMarkup(btn),
+                                parse_mode=enums.ParseMode.HTML
+                            )
+                        except MessageNotModified:
+                            pass
+                        except Exception as e:
+                            logger.exception(e)
+
+                    else:
+
+                        try:
+                            await query.message.edit_text(
+                                text=cap,
+                                reply_markup=InlineKeyboardMarkup(btn),
+                                disable_web_page_preview=True,
+                                parse_mode=enums.ParseMode.HTML
+                            )
+                        except MessageNotModified:
+                            pass
+
+                else:
+
+                    cap = await get_cap(
+                        settings,
+                        remaining_seconds,
+                        files,
+                        query,
+                        total_results,
+                        dreamx_title,
+                        offset + 1
+                    )
+
+                    await query.message.edit_text(
+                        text=cap,
+                        reply_markup=InlineKeyboardMarkup(btn),
+                        disable_web_page_preview=True,
+                        parse_mode=enums.ParseMode.HTML
+                    )
+
+            except MessageNotModified:
+                pass
+
+            except Exception as e:
+                logger.exception("Failed to send result: %s", e)
+
+        else:
+
+            try:
+                await query.edit_message_reply_markup(
+                    reply_markup=InlineKeyboardMarkup(btn)
+                )
+            except MessageNotModified:
+                pass
 
         await query.answer()
         return
