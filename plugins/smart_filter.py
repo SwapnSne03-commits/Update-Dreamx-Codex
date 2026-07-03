@@ -34,13 +34,15 @@ def create_session(key: str, query: str, files: list, user_id: int):
         "selected": {
             "season": None,
             "language": None,
-            "quality": None
+            "quality": None,
+            "combined": None,
         },
 
         "available": {
             "season": [],
             "language": [],
             "quality": []
+            "combined": [],
         },
 
         "created": time.time(),
@@ -319,6 +321,7 @@ DISPLAY_NAMES = {
     "Kannada": "ᴋᴀɴɴᴀᴅᴀ",
     "Dual Audio": "ᴅᴜᴀʟ ᴀᴜᴅɪᴏ",
     "Multi Audio": "ᴍᴜʟᴛɪ ᴀᴜᴅɪᴏ",
+    "Combined": "ᴄᴏᴍʙɪɴᴇᴅ",
 }
 
 LANGUAGE_SEARCH = {
@@ -393,6 +396,25 @@ def extract_languages(filename: str):
 
     return list(dict.fromkeys(found))
 
+COMBINED_PATTERNS = [
+    r"\bcombine\b",
+    r"\bcombined\b",
+    r"\bcomplete\s*series\b",
+]
+
+def extract_combined(filename: str):
+
+    if not filename:
+        return False
+
+    filename = filename.lower()
+
+    for pattern in COMBINED_PATTERNS:
+        if re.search(pattern, filename):
+            return True
+
+    return False
+    
 # -----------------------------
 # Build Available Filters
 # -----------------------------
@@ -407,6 +429,7 @@ def build_available_filters(key: str):
     seasons = set()
     qualities = set()
     languages = set()
+    combined = set()
 
     for file in session["all_files"]:
 
@@ -422,6 +445,8 @@ def build_available_filters(key: str):
         if quality:
             qualities.add(quality)
 
+        if extract_combined(filename):
+            combined.add("Combined")
         # Language
         langs = extract_languages(filename)
         for lang in langs:
@@ -439,6 +464,7 @@ def build_available_filters(key: str):
     )
 
     session["available"]["language"] = sorted(languages)
+    session["available"]["combined"] = sorted(combined)
 
 def refresh_available_filters(key: str):
 
@@ -458,11 +484,15 @@ FILTER_NAMES = {
 
     "quality": "Quality"
 
+    "combined": "Combined",
+
 }
 
 def build_main_filter_buttons(key):
 
-    return [
+    session = get_session(key)
+
+    rows = [
         [
             InlineKeyboardButton(
                 "📺 Season",
@@ -479,6 +509,19 @@ def build_main_filter_buttons(key):
         ]
     ]
 
+    if (
+        session
+        and session["available"]["combined"]
+    ):
+        rows.append([
+            InlineKeyboardButton(
+                "📦 Combined",
+                callback_data=f"sf:combined:{key}"
+            )
+        ])
+
+    return rows
+
 def build_filter_keyboard(key: str, filter_name: str):
 
     session = get_session(key)
@@ -494,6 +537,7 @@ def build_filter_keyboard(key: str, filter_name: str):
         "season": "⤋ ᴄʜᴏᴏsᴇ sᴇᴀsᴏɴ ⤋",
         "language": "⤋ ᴄʜᴏᴏsᴇ ʟᴀɴɢᴜᴀɢᴇ ⤋",
         "quality": "⤋ ᴄʜᴏᴏsᴇ ǫᴜᴀʟɪᴛʏ ⤋",
+        "combined": "⤋ ᴄʜᴏᴏsᴇ ᴄᴏᴍʙɪɴᴇᴅ ⤋",
     }
 
     rows.append([
@@ -616,6 +660,7 @@ def apply_filters(key: str):
     season = session["selected"]["season"]
     language = session["selected"]["language"]
     quality = session["selected"]["quality"]
+    combined = session["selected"]["combined"]
 
     filtered = []
 
@@ -641,6 +686,12 @@ def apply_filters(key: str):
         if quality:
 
             if extract_quality(filename) != quality:
+                continue
+
+        # Combined
+        if combined:
+
+            if not extract_combined(filename):
                 continue
 
         filtered.append(file)
@@ -810,6 +861,16 @@ async def handle_set(client, query, data):
         value
     )
 
+    if filter_name == "combined":
+
+        files = apply_filters(key)
+
+        return {
+            "type": "combined",
+            "files": files,
+            "key": key,
+        }
+
     # Build New Search Query
     search = build_search_query(key)
 
@@ -920,7 +981,7 @@ async def handle_callback(client, query):
 
         return await handle_main(client, query, parts)
 
-    elif action in ("season", "language", "quality"):
+    elif action in ("season", "language", "quality", "combined",):
 
         return await handle_menu(client, query, parts)
 
