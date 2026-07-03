@@ -496,15 +496,15 @@ def build_main_filter_buttons(key):
     rows = [
         [
             InlineKeyboardButton(
-                "📺 Season",
+                "sᴇᴀsɪᴏɴ",
                 callback_data=f"sf:season:{key}"
             ),
             InlineKeyboardButton(
-                "🌐 Language",
+                "ʟᴀɴɢᴜᴀɢᴇ",
                 callback_data=f"sf:language:{key}"
             ),
             InlineKeyboardButton(
-                "🎥 Quality",
+                "ǫᴜᴀʟɪᴛʏ",
                 callback_data=f"sf:quality:{key}"
             )
         ]
@@ -516,7 +516,7 @@ def build_main_filter_buttons(key):
     ):
         rows.append([
             InlineKeyboardButton(
-                "📦 Combined",
+                "ᴄᴏᴍʙɪɴᴇ ғɪʟᴇs",
                 callback_data=f"sf:combined:{key}"
             )
         ])
@@ -538,7 +538,7 @@ def build_filter_keyboard(key: str, filter_name: str):
         "season": "⤋ ᴄʜᴏᴏsᴇ sᴇᴀsᴏɴ ⤋",
         "language": "⤋ ᴄʜᴏᴏsᴇ ʟᴀɴɢᴜᴀɢᴇ ⤋",
         "quality": "⤋ ᴄʜᴏᴏsᴇ ǫᴜᴀʟɪᴛʏ ⤋",
-        "combined": "⤋ ᴄʜᴏᴏsᴇ ᴄᴏᴍʙɪɴᴇᴅ ⤋",
+        "combined": "⤋ ᴄᴏᴍʙɪɴᴇᴅ ᴄᴏʟʟᴇᴄᴛɪᴏɴ ⤋",
     }
 
     rows.append([
@@ -559,12 +559,26 @@ def build_filter_keyboard(key: str, filter_name: str):
 
             value = values[i + j]
 
-            text = DISPLAY_NAMES.get(value, value)
+            if filter_name == "combined":
 
-            selected = session["selected"].get(filter_name)
+                total = sum(
+                    1
+                    for file in session["all_files"]
+                    if extract_combined(
+                        getattr(file, "file_name", "") or ""
+                    )
+                )
 
-            if selected == value:
-                text = f"✅ {text}"
+                text = f"♲︎︎︎ ᴠɪᴇᴡ {total} ᴄᴏᴍʙɪɴᴇᴅ ꜰɪʟᴇs"
+
+            else:
+
+                text = DISPLAY_NAMES.get(value, value)
+
+                selected = session["selected"].get(filter_name)
+
+                if selected == value:
+                    text = f"✓ {text}"
             row.append(
                 InlineKeyboardButton(
                     text=text,
