@@ -1282,6 +1282,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             files = handled.get("files", [])
             key = handled.get("key")
+            session = get_session(key)
 
             settings = await get_settings(query.message.chat.id)
 
@@ -1322,12 +1323,68 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 )
             ])
 
-            try:
-                await query.edit_message_reply_markup(
-                    reply_markup=InlineKeyboardMarkup(btn)
+            if settings["button"]:
+
+                try:
+                    await query.edit_message_reply_markup(
+                        reply_markup=InlineKeyboardMarkup(btn)
+                    )
+                except MessageNotModified:
+                    pass
+
+            else:
+
+                cur_time = datetime.now(
+                    pytz.timezone("Asia/Kolkata")
+                ).time()
+
+                time_difference = (
+                    timedelta(
+                        hours=cur_time.hour,
+                        minutes=cur_time.minute,
+                        seconds=(cur_time.second + (cur_time.microsecond / 1000000))
+                    )
+                    - timedelta(
+                        hours=curr_time.hour,
+                        minutes=curr_time.minute,
+                        seconds=(curr_time.second + (curr_time.microsecond / 1000000))
+                    )
                 )
-            except MessageNotModified:
-                pass
+
+                remaining_seconds = "{:.2f}".format(
+                    time_difference.total_seconds()
+                )
+
+                dreamx_title = clean_search_text(
+                    session["query"]
+                )
+
+                cap = await get_cap(
+                    settings,
+                    remaining_seconds,
+                    files,
+                    query,
+                    len(session["filtered_files"]),
+                    dreamx_title,
+                    0
+                )
+
+                if query.message.caption:
+
+                    await query.message.edit_caption(
+                        caption=cap,
+                        reply_markup=InlineKeyboardMarkup(btn),
+                        parse_mode=enums.ParseMode.HTML
+                    )
+
+                else:
+
+                    await query.message.edit_text(
+                        text=cap,
+                        reply_markup=InlineKeyboardMarkup(btn),
+                        disable_web_page_preview=True,
+                        parse_mode=enums.ParseMode.HTML
+                    )
 
             await query.answer()
             return
