@@ -1158,6 +1158,112 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
             pass
     await query.answer()
 
+@Client.on_callback_query(filters.regex(r"^cf:"))
+async def combined_next(client, query):
+
+    _, key, offset = query.data.split(":")
+    offset = int(offset)
+
+    session = get_session(key)
+
+    if not session:
+        return await query.answer(
+            "Session Expired.",
+            show_alert=True
+        )
+
+    # User Check
+    owner = session.get("user_id")
+
+    if owner != query.from_user.id:
+        return await query.answer(
+            "🚫 ɴᴏᴛ ʏᴏᴜʀ ʀᴇǫᴜᴇsᴛ.",
+            show_alert=True
+        )
+
+    files = session["filtered_files"]
+
+    total = len(files)
+
+    current = files[offset:offset + 10]
+
+    settings = await get_settings(
+        query.message.chat.id
+    )
+
+    btn = build_result_keyboard(
+        files=current,
+        key=key,
+        settings=settings,
+    )
+    if offset > 0:
+        prev_offset = max(0, offset - 10)
+    else:
+        prev_offset = None
+
+    next_offset = offset + 10
+
+    if next_offset >= total:
+        next_offset = None
+
+    if prev_offset is None and next_offset is not None:
+
+        btn.append([
+            InlineKeyboardButton("ᴘᴀɢᴇ", callback_data="pages"),
+            InlineKeyboardButton(
+                f"{offset//10+1}/{math.ceil(total/10)}",
+                callback_data="pages"
+            ),
+            InlineKeyboardButton(
+                "ɴᴇxᴛ ⋟",
+                callback_data=f"cf:{key}:{next_offset}"
+            )
+        ])
+
+    elif prev_offset is not None and next_offset is None:
+
+        btn.append([
+            InlineKeyboardButton(
+                "⋞ ʙᴀᴄᴋ",
+                callback_data=f"cf:{key}:{prev_offset}"
+            ),
+            InlineKeyboardButton(
+                f"{offset//10+1}/{math.ceil(total/10)}",
+                callback_data="pages"
+            )
+        ])
+
+    elif prev_offset is not None and next_offset is not None:
+
+        btn.append([
+            InlineKeyboardButton(
+                "⋞ ʙᴀᴄᴋ",
+                callback_data=f"cf:{key}:{prev_offset}"
+            ),
+            InlineKeyboardButton(
+                f"{offset//10+1}/{math.ceil(total/10)}",
+                callback_data="pages"
+            ),
+            InlineKeyboardButton(
+                "ɴᴇxᴛ ⋟",
+                callback_data=f"cf:{key}:{next_offset}"
+            )
+        ])
+
+    btn.append([
+        InlineKeyboardButton(
+            "⤝ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
+            callback_data=f"sf:main:{key}"
+        )
+    ])
+    try:
+        await query.edit_message_reply_markup(
+            reply_markup=InlineKeyboardMarkup(btn)
+        )
+    except MessageNotModified:
+        pass
+
+    await query.answer()
 
 @Client.on_callback_query(group=10)
 async def cb_handler(client: Client, query: CallbackQuery):
@@ -1191,6 +1297,24 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 settings=settings,
             )
 
+            total = len(handled["all_files"])
+
+            if total > 10:
+
+                btn.append([
+                    InlineKeyboardButton(
+                        "ᴘᴀɢᴇ",
+                        callback_data="pages"
+                    ),
+                    InlineKeyboardButton(
+                        f"1/{math.ceil(total/10)}",
+                        callback_data="pages"
+                    ),
+                    InlineKeyboardButton(
+                        "ɴᴇxᴛ ⋟",
+                        callback_data=f"cf:{key}:10"
+                    )
+                ])
             btn.append([
                 InlineKeyboardButton(
                     "⤝ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
