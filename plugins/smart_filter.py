@@ -482,7 +482,7 @@ FILTER_NAMES = {
 
     "language": "Language",
 
-    "quality": "Quality"
+    "quality": "Quality",
 
     "combined": "Combined",
 
