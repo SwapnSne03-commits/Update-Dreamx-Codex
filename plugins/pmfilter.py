@@ -1256,12 +1256,53 @@ async def combined_next(client, query):
             callback_data=f"sf:main:{key}"
         )
     ])
-    try:
-        await query.edit_message_reply_markup(
-            reply_markup=InlineKeyboardMarkup(btn)
+
+    if settings["button"]:
+
+        try:
+            await query.edit_message_reply_markup(
+                reply_markup=InlineKeyboardMarkup(btn)
+            )
+        except MessageNotModified:
+            pass
+
+    else:
+        remaining_seconds = "0.00"
+        dreamx_title = clean_search_text(
+            session["query"]
+       )
+
+        cap = await get_cap(
+            settings,
+            remaining_seconds,
+            current,      # ← খুব গুরুত্বপূর্ণ
+            query,
+            total,
+            dreamx_title,
+            offset
         )
-    except MessageNotModified:
-        pass
+
+        try:
+            if query.message.caption:
+
+                await query.message.edit_caption(
+                    caption=cap,
+                    reply_markup=InlineKeyboardMarkup(btn),
+                    parse_mode=enums.ParseMode.HTML
+                 )
+
+            else:
+
+                await query.message.edit_text(
+                    text=cap,
+                    reply_markup=InlineKeyboardMarkup(btn),
+                    disable_web_page_preview=True,
+                    parse_mode=enums.ParseMode.HTML
+                 )
+        except MessageNotModified:
+            pass
+        except Exception as e:
+            logger.exception(e)
 
     await query.answer()
 
