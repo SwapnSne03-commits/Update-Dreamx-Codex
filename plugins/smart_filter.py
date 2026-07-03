@@ -894,17 +894,7 @@ async def handle_set(client, query, data):
 
     # Build New Search Query
     search = build_search_query(key)
-    files, _, _ = await get_search_results(
-        chat_id=query.message.chat.id,
-        query=search,
-    )
-    if not files:
-        await query.answer(
-            "❌ No files found.",
-            show_alert=True
-        )
-        return True
-
+    
     session = get_session(key)
 
     if session:
