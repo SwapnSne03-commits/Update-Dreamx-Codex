@@ -1456,14 +1456,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     "Please choose another available language."
                 )
 
-           elif selected.get("quality"):
+            elif selected.get("quality"):
 
                 text = (
                     "🎬 This quality isn't available.\n\n"
                    "Please choose another available quality."
                 )
 
-           else:
+            else:
 
                 text = (
                     "❌ No files found."
