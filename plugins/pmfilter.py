@@ -1436,6 +1436,45 @@ async def cb_handler(client: Client, query: CallbackQuery):
             query=search,
         )
 
+        if not files:
+
+            session = get_session(key)
+
+            selected = session["selected"] if session else {}
+
+            if selected.get("season"):
+
+                text = (
+                    "📺 This season isn't available.\n\n"
+                    "Please choose another available season."
+                )
+
+            elif selected.get("language"):
+
+                text = (
+                    "🌐 This language isn't available.\n\n"
+                    "Please choose another available language."
+                )
+
+           elif selected.get("quality"):
+
+                text = (
+                    "🎬 This quality isn't available.\n\n"
+                   "Please choose another available quality."
+                )
+
+           else:
+
+                text = (
+                    "❌ No files found."
+                )
+
+            await query.answer(
+                text,
+                show_alert=True
+            )
+
+            return
         btn = build_result_keyboard(
            files=files,
             key=key,
