@@ -222,7 +222,7 @@ Nᴀᴍᴇ : {}
 
 Mᴇꜱꜱᴀɢᴇ : <code>{}</code>"""
     
-    CAPTION = """<b>{file_caption}\n\n{metadata}\n━━━━━━━━━━━━━━\n🎭 Cinema Zone ➤\n@Graduate_Movies | @Graduate_Request | @Graduate_Request_Pro\n━━━━━━━━━━━━━━</b>"""
+    CAPTION = """<b>{file_caption}\n\n{metadata}\n━━━━━━━━━━━━━━\n🎭 Cinema Zone ➤\n@Graduate_Movies | @Graduate_Request | @Graduate_Request_Pro\n━━━━━━━━━━━━━━\n\nNote:- If No Sound, Use VLC or MX Player. Available in Play Store.</b>"""
 
     
     MOVIE_UPDATE_NOTIFY_TXT = """
