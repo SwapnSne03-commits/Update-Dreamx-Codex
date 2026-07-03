@@ -43,6 +43,7 @@ def create_session(key: str, query: str, files: list, user_id: int):
             "language": [],
             "quality": [],
             "combined": [],
+            "filtered_files": [],
         },
 
         "created": time.time(),
@@ -865,9 +866,15 @@ async def handle_set(client, query, data):
 
         files = apply_filters(key)
 
+        session = get_session(key)
+
+        if session:
+            session["filtered_files"] = files
         return {
             "type": "combined",
-            "files": files,
+            "files": files[:10],
+            "all_files": files,
+            "offset": 0,
             "key": key,
         }
 
