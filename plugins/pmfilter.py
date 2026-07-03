@@ -1172,6 +1172,41 @@ async def cb_handler(client: Client, query: CallbackQuery):
         search = handled.get("search")
         key = handled.get("key")
 
+        if handled.get("type") == "combined":
+
+            files = handled.get("files", [])
+            key = handled.get("key")
+
+            settings = await get_settings(query.message.chat.id)
+
+            if not files:
+                await query.answer(
+                    "No Combined files found.",
+                    show_alert=True
+                )
+                return
+            btn = build_result_keyboard(
+                files=files,
+                key=key,
+                settings=settings,
+            )
+
+            btn.append([
+                InlineKeyboardButton(
+                    "⤝ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
+                    callback_data=f"sf:main:{key}"
+                )
+            ])
+
+            try:
+                await query.edit_message_reply_markup(
+                    reply_markup=InlineKeyboardMarkup(btn)
+                )
+            except MessageNotModified:
+                pass
+
+            await query.answer()
+            return
         settings = await get_settings(query.message.chat.id)
 
         files, offset, total_results = await get_search_results(
