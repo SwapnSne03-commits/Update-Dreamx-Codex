@@ -1445,22 +1445,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
             if selected.get("season"):
 
                 text = (
-                    "📺 This season isn't available.\n\n"
-                    "Please choose another available season."
+                    "🙅 This season isn't available."
                 )
 
             elif selected.get("language"):
 
                 text = (
-                    "🌐 This language isn't available.\n\n"
-                    "Please choose another available language."
+                    "🙅 This language isn't available."
                 )
 
             elif selected.get("quality"):
 
                 text = (
-                    "🎬 This quality isn't available.\n\n"
-                   "Please choose another available quality."
+                    "🙅 This quality isn't available."
                 )
 
             else:
