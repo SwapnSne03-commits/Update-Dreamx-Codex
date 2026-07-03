@@ -900,9 +900,9 @@ async def handle_set(client, query, data):
     if session:
         session["current_query"] = search
 
-    await query.answer(
-        f"ғɪʟᴛᴇʀɪɴɢ..."
-    )
+   # await query.answer(
+      #  f"ғɪʟᴛᴇʀɪɴɢ..."
+   # )
 
     # pmfilter.py will perform get_search_results(search)
 
