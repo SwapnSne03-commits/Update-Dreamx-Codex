@@ -569,7 +569,7 @@ def build_filter_keyboard(key: str, filter_name: str):
                     )
                 )
 
-                text = f"♲︎︎︎ ᴠɪᴇᴡ {total} ᴄᴏᴍʙɪɴᴇᴅ ꜰɪʟᴇs"
+                text = f"ᴄʟɪᴄᴋ ᴛᴏ ᴠɪᴇᴡ {total} ᴄᴏᴍʙɪɴᴇᴅ ꜰɪʟᴇs"
 
             else:
 
