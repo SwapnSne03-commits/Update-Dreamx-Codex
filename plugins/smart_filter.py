@@ -41,7 +41,7 @@ def create_session(key: str, query: str, files: list, user_id: int):
         "available": {
             "season": [],
             "language": [],
-            "quality": []
+            "quality": [],
             "combined": [],
         },
 
