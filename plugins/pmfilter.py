@@ -1436,6 +1436,23 @@ async def cb_handler(client: Client, query: CallbackQuery):
             query=search,
         )
 
+        if len(files) == 0:
+
+            session = get_session(key)
+
+            if session:
+                session["selected"] = {
+                    "season": None,
+                    "language": None,
+                    "quality": None,
+                    "combined": None,
+                }
+
+            await query.answer(
+                "❌ No files found for this filter.\nTry another option.",
+                show_alert=True
+            )
+            return
         btn = build_result_keyboard(
            files=files,
             key=key,
