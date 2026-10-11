@@ -247,6 +247,40 @@ async def year_fallback_search(chat_id, search):
 
     return [], 0, 0, search
 
+
+async def apostrophe_compact_fallback_search(chat_id, original_query):
+    """
+    If the space-separated apostrophe search fails,
+    try joining the words around the apostrophe.
+    """
+
+    if not original_query or not re.search(r"['’]", original_query):
+        return [], 0, 0, ""
+
+    # "Vijaynagar'er Hirey" -> "vijaynagarer hirey"
+    compact_query = re.sub(
+        r"(?<=[a-zA-Z])['’](?=[a-zA-Z])",
+        "",
+        original_query.lower()
+    )
+
+    compact_query = smart_query_cleaner(compact_query)
+
+    if not compact_query:
+        return [], 0, 0, ""
+
+    files, offset, total = await get_search_results(
+        chat_id,
+        compact_query,
+        offset=0,
+        filter=True
+    )
+
+    if files:
+        return files, offset, total, compact_query
+
+    return [], 0, 0, ""
+
 async def symbol_fallback_search(chat_id, search):
     # 1️⃣ original search
     files, offset, total = await get_search_results(
@@ -2560,7 +2594,7 @@ async def auto_filter(client, msg, spoll=False):
                     else:
                         search = search + x + " "
                 #search = re.sub(r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|bro|bruh|broh|helo|that|find|dubbed|link|venum|iruka|pannunga|pannungga|anuppunga|anupunga|anuppungga|anupungga|film|undo|kitti|kitty|tharu|kittumo|kittum|movie|any(one)|with\ssubtitle(s)?)", "", search, flags=re.IGNORECASE)
-                removal_pattern = r"\b(pls|plz|please|send|snd|give|giv|gib|movie(s)?|new|latest|that|find|any(one)?)\b"
+                removal_pattern = r"\b(pls|plz|please|send|snd|give|giv|gib|movie(s)?|new|latest|any(one)?)\b"
 
                 search = re.sub(removal_pattern, "", search, flags=re.IGNORECASE)
 
@@ -2588,6 +2622,18 @@ async def auto_filter(client, msg, spoll=False):
                         message.chat.id,
                         search
                     )
+
+                # Try compact apostrophe variant before AI spell check
+                if not files:
+                    files, offset, total_results, compact_search = (
+                        await apostrophe_compact_fallback_search(
+                            message.chat.id,
+                            message_text
+                        )
+                    )
+
+                    if files:
+                        search = compact_search
                 search = re.sub(r"\s+", " ", search).strip()
                 settings = await get_settings(message.chat.id)
                 if not files:
